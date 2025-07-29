@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Susmita's Jar of Love Notes</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Gradient background */
+            background: linear-gradient(to bottom right, #ffdde1, #ee9ca7); /* Softer, more vibrant pink gradient */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Prevent scrollbar from heart animations */
+            position: relative; /* For background pattern */
+        }
+
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle, #fce4ec 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        /* Custom animation for fading in elements */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInAnimation 1.5s ease-out forwards;
+        }
+
+        @keyframes fadeInAnimation {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Delay for sequential animations */
+        .fade-in-1 { animation-delay: 0.5s; }
+        .fade-in-2 { animation-delay: 1.0s; }
+        .fade-in-3 { animation-delay: 1.5s; }
+        .fade-in-4 { animation-delay: 2.0s; }
+        .fade-in-5 { animation-delay: 2.5s; }
+
+        /* Heart animation */
+        .heart-animation {
+            position: absolute;
+            color: #ef4444; /* Red heart */
+            font-size: 2.5rem; /* Slightly larger hearts */
+            animation: floatUp 3s ease-out forwards;
+            opacity: 0;
+            pointer-events: none; /* Allow clicks to pass through */
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.5); /* Soft glow */
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-200px) scale(1.5); /* Float higher, larger */
+                opacity: 0;
+            }
+        }
+
+        /* Message box styling (for alerts/confirmations) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+            display: none; /* Hidden by default */
+            animation: fadeInScale 0.3s ease-out forwards;
+            border: 2px solid #f87171; /* Red border */
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Love note specific animation */
+        .note-appear {
+            animation: noteAppear 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; /* Bounce effect */
+        }
+
+        @keyframes noteAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.7) translateY(50px);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.05) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Custom Message Box -->
+    <div class="message-box" id="messageBox">
+        <p class="text-xl font-semibold text-gray-800 mb-4" id="messageBoxContent"></p>
+        <button class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300" onclick="hideMessageBox()">Close</button>
+    </div>
+
+    <div class="relative bg-white/95 backdrop-blur-sm p-8 md:p-12 rounded-3xl shadow-2xl max-w-lg mx-auto text-center border border-pink-300 transform rotate-[-1deg] hover:rotate-0 transition-transform duration-300">
+        <!-- Main title for Susmita -->
+        <h1 class="text-4xl md:text-5xl font-extrabold text-pink-600 mb-4 fade-in fade-in-1 drop-shadow-lg">
+            For My Sweet Susmita,
+        </h1>
+
+        <!-- Initial romantic message/instruction -->
+        <p class="text-lg md:text-xl text-gray-700 leading-relaxed mb-6 fade-in fade-in-2">
+            Here's a special jar filled with my love notes for you.
+            Click the button below to discover a message!
+        </p>
+
+        <!-- Love Note Display Area - Styled like a jar opening -->
+        <div id="loveNoteDisplay" class="relative bg-gradient-to-br from-pink-50 to-pink-200 p-6 rounded-3xl border-4 border-pink-300 shadow-xl min-h-[140px] flex items-center justify-center mb-6 fade-in fade-in-3 overflow-hidden">
+            <p id="currentLoveNote" class="text-xl md:text-2xl text-pink-800 font-semibold italic relative z-10">
+                Your first love note awaits!
+            </p>
+            <!-- Decorative element for jar opening -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-8 bg-pink-400 rounded-b-full shadow-inner opacity-70"></div>
+        </div>
+
+        <!-- Buttons Container -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+            <!-- Button to pick a new note -->
+            <button id="pickNoteButton" class="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out fade-in fade-in-4 flex items-center justify-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                Pick a Love Note
+            </button>
+
+            <!-- Button to copy the current note -->
+            <button id="copyNoteButton" class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out fade-in fade-in-5 flex items-center justify-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                Copy Note
+            </button>
+        </div>
+
+        <!-- Notes counter and Reset Button -->
+        <div class="flex justify-between items-center mt-6 fade-in fade-in-5">
+            <p class="text-md text-gray-600">
+                Notes read: <span id="notesCount" class="font-bold text-pink-700 text-lg">0</span>
+            </p>
+            <button id="resetButton" class="text-sm text-gray-500 hover:text-gray-700 underline transition-colors duration-200">
+                Reset Jar
+            </button>
+        </div>
+
+        <!-- Your name -->
+        <h2 class="text-2xl md:text-3xl font-bold text-pink-700 mt-8 fade-in fade-in-4">
+            With all my heart,
+        </h2>
+        <h2 class="text-3xl md:text-4xl font-extrabold text-pink-800 mt-2 fade-in fade-in-5">
+            Biswajit
+        </h2>
+    </div>
+
+    <script>
+        // Array of romantic messages (expanded)
+        const loveNotes = [
+            "You are the most beautiful person I know, inside and out. My love for you is endless.",
+            "Every moment with you is a cherished memory, a precious gift I hold dear.",
+            "Your smile brightens my entire day and fills my world with pure joy.",
+            "I fall in love with you a little more each and every day, Susmita.",
+            "Thank you for being you, my amazing Susmita. You are truly wonderful.",
+            "My world is so much better with you in it. You complete me.",
+            "You inspire me in countless ways, pushing me to be a better person.",
+            "Just thinking about you makes me happy and brings a smile to my face.",
+            "I'm so incredibly lucky to have you by my side, my love.",
+            "You're not just my girlfriend, you're my best friend, my confidante, my everything.",
+            "I adore everything about you – your laughter, your kindness, your spirit.",
+            "My love for you grows stronger with each passing moment, like a beautiful melody.",
+            "You are my greatest adventure, and I can't wait to explore more with you.",
+            "I can't imagine my life without you, Susmita. You are my anchor.",
+            "You complete me, my love. With you, I am whole.",
+            "Even when things are tough, my love for you never wavers. We'll get through anything together.",
+            "I'm truly sorry if I've hurt you. Please know my heart is always yours, seeking your forgiveness.",
+            "Let's make things right and create even more beautiful memories, hand in hand.",
+            "You are my everything, my sun, my moon, and all my stars.",
+            "Forever and always, my love. My heart belongs to you.",
+            "You're the missing piece I never knew I needed.",
+            "My favorite place in the world is next to you.",
+            "You make ordinary moments extraordinary.",
+            "Thank you for your patience and understanding.",
+            "I promise to always try my best for us.",
+            "You are my dream come true.",
+            "Thinking of you makes my heart skip a beat.",
+            "You're the reason I believe in magic.",
+            "Every day is an adventure with you.",
+            "I cherish our bond more than words can say."
+        ];
+
+        let notesReadCount = 0;
+        let lastNoteIndex = -1; // To avoid immediate repetition
+        let currentDisplayedNote = ""; // To store the note currently shown for copying
+
+        const currentLoveNoteElement = document.getElementById('currentLoveNote');
+        const pickNoteButton = document.getElementById('pickNoteButton');
+        const notesCountElement = document.getElementById('notesCount');
+        const resetButton = document.getElementById('resetButton');
+        const copyNoteButton = document.getElementById('copyNoteButton');
+
+        // Function to show a message box (replaces alert())
+        function showMessageBox(message) {
+            const messageBox = document.getElementById('messageBox');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            messageBoxContent.textContent = message;
+            messageBox.style.display = 'block';
+        }
+
+        // Function to hide the message box
+        function hideMessageBox() {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.style.display = 'none';
+        }
+
+        // Function to pick and display a new love note
+        function pickNewLoveNote() {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * loveNotes.length);
+            } while (randomIndex === lastNoteIndex && loveNotes.length > 1); // Ensure different note if possible
+
+            const newNote = loveNotes[randomIndex];
+            lastNoteIndex = randomIndex;
+            currentDisplayedNote = newNote; // Update the current displayed note for copying
+
+            // Apply animation class before changing content
+            currentLoveNoteElement.classList.remove('note-appear'); // Remove to re-trigger
+            void currentLoveNoteElement.offsetWidth; // Trigger reflow for animation
+            currentLoveNoteElement.textContent = newNote;
+            currentLoveNoteElement.classList.add('note-appear');
+
+            notesReadCount++;
+            notesCountElement.textContent = notesReadCount;
+
+            // Show a small confirmation message if it's the first note or a significant one
+            if (notesReadCount === 1) {
+                showMessageBox("Here's your first love note!");
+            } else if (notesReadCount % 5 === 0) { // Every 5 notes
+                showMessageBox(`You've read ${notesReadCount} love notes! Keep going!`);
+            }
+        }
+
+        // Event listener for the "Pick a Love Note" button
+        pickNoteButton.addEventListener('click', pickNewLoveNote);
+
+        // Event listener for the "Reset Jar" button
+        resetButton.addEventListener('click', () => {
+            notesReadCount = 0;
+            notesCountElement.textContent = notesReadCount;
+            currentLoveNoteElement.textContent = "Your first love note awaits!";
+            currentLoveNoteElement.classList.remove('note-appear'); // Remove animation class
+            lastNoteIndex = -1; // Reset last note index
+            currentDisplayedNote = ""; // Clear displayed note for copying
+            showMessageBox("The jar has been reset! Ready for new notes.");
+        });
+
+        // Event listener for the "Copy Note" button
+        copyNoteButton.addEventListener('click', () => {
+            if (currentDisplayedNote) {
+                // Use document.execCommand('copy') for clipboard functionality in iframes
+                const textArea = document.createElement("textarea");
+                textArea.value = currentDisplayedNote;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showMessageBox("Love note copied to clipboard!");
+                } catch (err) {
+                    showMessageBox("Failed to copy note. Please try again manually.");
+                }
+                document.body.removeChild(textArea);
+            } else {
+                showMessageBox("There's no note to copy yet! Pick one first.");
+            }
+        });
+
+
+        // Function to create and animate a heart emoji
+        function createHeart() {
+            const heart = document.createElement('span');
+            heart.classList.add('heart-animation');
+            heart.innerHTML = '&#x2764;&#xFE0F;'; // Red Heart Emoji
+
+            // Random starting position at the bottom of the screen
+            const startX = Math.random() * window.innerWidth;
+            const startY = window.innerHeight + 20; // Start below the screen
+            heart.style.left = `${startX}px`;
+            heart.style.top = `${startY}px`;
+
+            document.body.appendChild(heart);
+
+            // Remove heart after animation to prevent DOM clutter
+            heart.addEventListener('animationend', () => {
+                heart.remove();
+            });
+        }
+
+        // Create hearts at a regular interval
+        setInterval(createHeart, 800); // Create a new heart every 800ms
+    </script>
+</body>
+</html>
