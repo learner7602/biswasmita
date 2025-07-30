@@ -274,12 +274,12 @@
         // --- Firebase Configuration ---
         // Your actual Firebase project configuration, as copied from your Firebase Console.
         const firebaseConfig = {
-            apiKey: "AIzaSyB-9OmjdMfSWP0C1Gk-4Ls9afe-5ei6lkg",
-  authDomain: "drchat-d72d9.firebaseapp.com",
-  projectId: "drchat-d72d9",
-  storageBucket: "drchat-d72d9.firebasestorage.app",
-  messagingSenderId: "687271085882",
-  appId: "1:687271085882:web:1b93bbd798bf8cb8047203"
+            apiKey: "AIzaSyB-9OmjdMfSPBC1Ok-4Ls9afe-5ei6lkg",
+            authDomain: "drchat-d72d9.firebaseapp.com",
+            projectId: "drchat-d72d9",
+            storageBucket: "drchat-d72d9.firebasestorage.app",
+            messagingSenderId: "687271085882",
+            appId: "1:687271085882:web:1b93bbd798bf8cb8047203"
         };
 
         // Global variables provided by the Canvas environment.
@@ -433,8 +433,13 @@
         async function checkAndSetUsername(uid) {
             try {
                 showLoading();
+                // Construct the base path for user artifacts.
+                // If appId is 'default-app-id' (meaning running locally outside Canvas),
+                // we omit 'artifacts/{appId}' to get an even number of segments.
+                const userArtifactsPath = appId === 'default-app-id' ? 'users' : `artifacts/${appId}/users`;
+
                 // Reference to the user's private profile document
-                const userDocRef = doc(db, `artifacts/${appId}/users/${uid}/profile/data`, 'userProfile');
+                const userDocRef = doc(db, `${userArtifactsPath}/${uid}/profile/data`, 'userProfile');
                 const userDocSnap = await getDoc(userDocRef);
 
                 if (userDocSnap.exists()) {
@@ -469,8 +474,11 @@
             if (currentUserId) {
                 try {
                     showLoading();
+                    // Construct the base path for public artifacts.
+                    const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
+
                     // Check if username already exists in the public users list
-                    const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                    const usersRef = collection(db, `${publicArtifactsPath}/users`);
                     const q = query(usersRef, where("username", "==", username));
                     const querySnapshot = await getDocs(q);
 
@@ -480,11 +488,11 @@
                     }
 
                     // Save username to the user's private profile
-                    const userProfileDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`, 'userProfile');
+                    const userProfileDocRef = doc(db, `${publicArtifactsPath.replace('public/data', `users/${currentUserId}/profile/data`)}`, 'userProfile'); // Adjusted path for private profile
                     await setDoc(userProfileDocRef, { username: username, uid: currentUserId });
 
                     // Add user to a public collection for other users to see
-                    const publicUserDocRef = doc(db, `artifacts/${appId}/public/data/users`, currentUserId);
+                    const publicUserDocRef = doc(db, `${publicArtifactsPath}/users`, currentUserId);
                     await setDoc(publicUserDocRef, { username: username, uid: currentUserId });
 
                     currentUsername = username;
@@ -571,7 +579,10 @@
         function fetchUsers() {
             if (!currentUserId) return; // Ensure user is logged in
 
-            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+            // Construct the base path for public artifacts.
+            const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
+
+            const usersRef = collection(db, `${publicArtifactsPath}/users`);
             // Query to get all public user profiles, ordered by username
             const q = query(usersRef, orderBy("username"));
 
@@ -669,10 +680,13 @@
 
             if (!currentUserId || !selectedChatPartner) return;
 
+            // Construct the base path for public artifacts.
+            const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
+
             // Get the unique chat ID for the current pair of users
             const chatId = getChatId(currentUserId, selectedChatPartner.uid);
             // Reference to the messages subcollection for this chat
-            const messagesRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+            const messagesRef = collection(db, `${publicArtifactsPath}/chats/${chatId}/messages`);
             // Query messages, ordered by timestamp
             const q = query(messagesRef, orderBy("timestamp"));
 
@@ -699,8 +713,11 @@
             // Ensure message is not empty and a chat partner is selected
             if (!messageText || !currentUserId || !selectedChatPartner) return;
 
+            // Construct the base path for public artifacts.
+            const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
+
             const chatId = getChatId(currentUserId, selectedChatPartner.uid);
-            const messagesRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+            const messagesRef = collection(db, `${publicArtifactsPath}/chats/${chatId}/messages`);
 
             try {
                 showLoading();
