@@ -125,42 +125,70 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             text-align: center;
         }
-        /* Responsive adjustments for smaller screens (mobile) */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                max-width: 100%;
-                border-right: none;
-                position: absolute; /* Position sidebar absolutely to slide in/out */
-                height: 100%;
-                z-index: 10;
-                transform: translateX(-100%); /* Hidden by default */
-                transition: transform 0.3s ease-in-out; /* Smooth transition */
-            }
-            .sidebar.active {
-                transform: translateX(0); /* Show sidebar */
-            }
-            .chat-area {
-                width: 100%; /* Chat area takes full width when sidebar is hidden */
-            }
-            .chat-container {
-                margin: 0; /* No margin on mobile */
-                border-radius: 0;
-                box-shadow: none;
-            }
+        /* New UI for Auth Section */
+        .auth-card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: #25d366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2);
+        }
+        .auth-button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: #25d366;
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            border: none;
+        }
+        .auth-button:hover {
+            background-color: #1ea750;
+            transform: translateY(-1px);
+        }
+        .auth-toggle-link {
+            color: #25d366;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .auth-toggle-link:hover {
+            color: #1ea750;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div id="app" class="w-full h-screen">
-        <!-- Authentication Section -->
-        <div id="auth-section" class="flex flex-col items-center justify-center w-full h-full bg-white rounded-lg shadow-xl p-8 max-w-md mx-auto">
+    <div id="app" class="w-full h-screen flex items-center justify-center">
+        <!-- Authentication Section (New UI) -->
+        <div id="auth-section" class="auth-card">
             <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to Dr. Chat!</h2>
             <div class="w-full">
-                <input type="email" id="auth-email" placeholder="Email" class="w-full px-4 py-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                <button id="login-btn" class="w-full bg-green-500 text-white font-semibold py-3 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out shadow-md">Login</button>
-                <p class="text-center text-gray-600 mt-4">Don't have an account? <a href="#" id="signup-link" class="text-green-600 hover:underline">Sign Up</a></p>
+                <input type="email" id="auth-email" placeholder="Email" class="auth-input">
+                <input type="password" id="auth-password" placeholder="Password" class="auth-input">
+                <button id="auth-main-button" class="auth-button mb-4">Login</button>
+                <p class="text-center text-gray-600">
+                    <span id="auth-toggle-text">Don't have an account?</span>
+                    <a href="#" id="auth-toggle-link" class="auth-toggle-link ml-1">Sign Up</a>
+                </p>
                 <p class="text-center text-red-500 mt-4" id="auth-error-message"></p>
             </div>
         </div>
@@ -276,8 +304,9 @@
         const authSection = document.getElementById('auth-section');
         const authEmailInput = document.getElementById('auth-email');
         const authPasswordInput = document.getElementById('auth-password');
-        const loginBtn = document.getElementById('login-btn');
-        const signupLink = document.getElementById('signup-link');
+        const authMainButton = document.getElementById('auth-main-button'); // Renamed for dynamic text
+        const authToggleLink = document.getElementById('auth-toggle-link');
+        const authToggleText = document.getElementById('auth-toggle-text');
         const authErrorMessage = document.getElementById('auth-error-message');
 
         // Main Chat Section
@@ -307,6 +336,9 @@
         const messageBoxModal = document.getElementById('message-box-modal');
         const messageBoxText = document.getElementById('message-box-text');
         const messageBoxOkBtn = document.getElementById('message-box-ok-btn');
+
+        // --- Authentication Mode State ---
+        let isLoginMode = true; // true for Login, false for Sign Up
 
         // --- Utility Functions ---
 
@@ -388,7 +420,7 @@
                 });
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
-                showMessageBox("Failed to initialize app. Please try again later.");
+                showMessageBox("Failed to initialize app. Please try again later. Check console for details.");
                 hideLoading();
             }
         }
@@ -416,7 +448,7 @@
                 }
             } catch (error) {
                 console.error("Error checking/setting username:", error);
-                showMessageBox("Failed to load user profile. Please try again.");
+                showMessageBox("Failed to load user profile. Please try again. Check console for details.");
                 displayAuthSection(); // Fallback to auth if profile fails
             } finally {
                 hideLoading();
@@ -472,6 +504,7 @@
 
         /**
          * Shows the authentication section and hides others.
+         * Resets the auth form to login mode.
          */
         function displayAuthSection() {
             authSection.classList.remove('hidden');
@@ -480,6 +513,7 @@
             authErrorMessage.textContent = ''; // Clear previous errors
             authEmailInput.value = '';
             authPasswordInput.value = '';
+            setAuthMode('login'); // Reset to login mode
         }
 
         /**
@@ -509,6 +543,24 @@
             usernameModal.classList.remove('hidden');
             newUsernameInput.value = ''; // Clear input field
             usernameErrorMessage.textContent = ''; // Clear previous errors
+        }
+
+        /**
+         * Toggles the authentication form between Login and Sign Up mode.
+         * @param {string} mode - 'login' or 'signup'
+         */
+        function setAuthMode(mode) {
+            isLoginMode = (mode === 'login');
+            if (isLoginMode) {
+                authMainButton.textContent = 'Login';
+                authToggleText.textContent = "Don't have an account?";
+                authToggleLink.textContent = 'Sign Up';
+            } else {
+                authMainButton.textContent = 'Sign Up';
+                authToggleText.textContent = "Already have an account?";
+                authToggleLink.textContent = 'Login';
+            }
+            authErrorMessage.textContent = ''; // Clear error message on mode change
         }
 
         // --- User List and Chat Selection ---
@@ -705,45 +757,35 @@
 
         // --- Event Listeners ---
 
-        // Login button click handler
-        loginBtn.addEventListener('click', async () => {
+        // Main auth button click handler (Login or Sign Up)
+        authMainButton.addEventListener('click', async () => {
             const email = authEmailInput.value;
             const password = authPasswordInput.value;
             if (!email || !password) {
                 authErrorMessage.textContent = "Please enter email and password.";
                 return;
             }
+
             try {
                 showLoading();
-                await signInWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged listener will handle the UI update after successful login
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+                // onAuthStateChanged listener will handle the UI update after successful auth
             } catch (error) {
-                console.error("Login error:", error);
-                authErrorMessage.textContent = "Login failed: " + error.message;
+                console.error("Authentication error:", error);
+                authErrorMessage.textContent = "Authentication failed: " + error.message;
             } finally {
                 hideLoading();
             }
         });
 
-        // Sign Up link click handler
-        signupLink.addEventListener('click', async (e) => {
-            e.preventDefault(); // Prevent default link behavior
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-            if (!email || !password) {
-                authErrorMessage.textContent = "Please enter email and password to sign up.";
-                return;
-            }
-            try {
-                showLoading();
-                await createUserWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged listener will handle the UI update and prompt for username
-            } catch (error) {
-                console.error("Sign up error:", error);
-                authErrorMessage.textContent = "Sign up failed: " + error.message;
-            } finally {
-                hideLoading();
-            }
+        // Toggle between Login and Sign Up mode
+        authToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            setAuthMode(isLoginMode ? 'signup' : 'login');
         });
 
         // Logout button click handler
