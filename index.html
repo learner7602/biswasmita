@@ -155,7 +155,7 @@
     <div id="app" class="w-full h-screen">
         <!-- Authentication Section -->
         <div id="auth-section" class="flex flex-col items-center justify-center w-full h-full bg-white rounded-lg shadow-xl p-8 max-w-md mx-auto">
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to Chat!</h2>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to Dr. Chat!</h2>
             <div class="w-full">
                 <input type="email" id="auth-email" placeholder="Email" class="w-full px-4 py-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
                 <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -244,11 +244,9 @@
         import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, orderBy, addDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        // You MUST replace these placeholder values with your actual Firebase project configuration.
-        // You can find your Firebase config object in your Firebase Console:
-        // Project settings (gear icon next to "Project overview") -> "Your apps" -> Select "Web" app.
+        // Your actual Firebase project configuration, as copied from your Firebase Console.
         const firebaseConfig = {
-            apiKey: "AIzaSyB-9OmjdMfSWP0C1Gk-4Ls9afe-5ei6lkg",
+            apiKey: "AIzaSyB-9OmjdMfSPBC1Ok-4Ls9afe-5ei6lkg",
             authDomain: "drchat-d72d9.firebaseapp.com",
             projectId: "drchat-d72d9",
             storageBucket: "drchat-d72d9.firebasestorage.app",
