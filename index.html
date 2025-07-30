@@ -3,340 +3,846 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Susmita's Jar of Love Notes</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Dr. Chat</title>
+    <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Inter for a clean look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Custom CSS for specific layout and styling not directly covered by Tailwind */
         body {
             font-family: 'Inter', sans-serif;
-            /* Gradient background */
-            background: linear-gradient(to bottom right, #ffdde1, #ee9ca7); /* Softer, more vibrant pink gradient */
-            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5; /* Light grey background for the page */
+        }
+        #app {
+            display: flex;
+            height: 100vh; /* Full viewport height */
+            overflow: hidden; /* Prevent scrollbars on the main app container */
+        }
+        .chat-container {
+            display: flex;
+            flex-grow: 1; /* Allows the chat container to take available space */
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners for the main chat box */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+            margin: 1rem; /* Margin around the chat box */
+            overflow: hidden; /* Ensures content inside respects border-radius */
+        }
+        .sidebar {
+            width: 30%; /* Sidebar width */
+            min-width: 280px; /* Minimum width for sidebar */
+            max-width: 350px; /* Maximum width for sidebar */
+            border-right: 1px solid #e0e0e0; /* Separator line */
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa; /* Lighter background for sidebar */
+        }
+        .chat-area {
+            flex-grow: 1; /* Chat area takes remaining space */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .messages {
+            flex-grow: 1; /* Message area grows to fill space */
+            overflow-y: auto; /* Enable vertical scrolling for messages */
+            padding: 1rem;
+            background-color: #e5ddd5; /* WhatsApp chat background color */
+            display: flex;
+            flex-direction: column;
+        }
+        .message-bubble {
+            max-width: 70%; /* Max width for message bubbles */
+            padding: 0.5rem 0.8rem;
+            border-radius: 0.75rem; /* Rounded corners for bubbles */
+            margin-bottom: 0.5rem;
+            word-wrap: break-word; /* Ensures long words break and wrap */
+        }
+        .message-sent {
+            background-color: #dcf8c6; /* Greenish for messages sent by current user */
+            align-self: flex-end; /* Aligns to the right */
+        }
+        .message-received {
+            background-color: #ffffff; /* White for messages received from others */
+            align-self: flex-start; /* Aligns to the left */
+        }
+        .message-time {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 0.2rem;
+            text-align: right;
+        }
+        .chat-input-area {
+            padding: 1rem;
+            background-color: #f0f2f5;
+            border-top: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
-            justify-content: center;
-            overflow: hidden; /* Prevent scrollbar from heart animations */
-            position: relative; /* For background pattern */
         }
-
-        /* Subtle background pattern */
-        body::before {
-            content: '';
-            position: absolute;
+        .user-list-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s; /* Smooth hover effect */
+        }
+        .user-list-item:hover {
+            background-color: #f0f0f0;
+        }
+        .user-list-item.active {
+            background-color: #e0e0e0; /* Highlight active chat partner */
+        }
+        /* Spinner animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #25d366; /* WhatsApp green */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Modal styling */
+        .modal {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: radial-gradient(circle, #fce4ec 1px, transparent 1px);
-            background-size: 20px 20px;
-            opacity: 0.3;
-            z-index: -1;
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure modal is on top */
         }
-
-        /* Custom animation for fading in elements */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInAnimation 1.5s ease-out forwards;
-        }
-
-        @keyframes fadeInAnimation {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Delay for sequential animations */
-        .fade-in-1 { animation-delay: 0.5s; }
-        .fade-in-2 { animation-delay: 1.0s; }
-        .fade-in-3 { animation-delay: 1.5s; }
-        .fade-in-4 { animation-delay: 2.0s; }
-        .fade-in-5 { animation-delay: 2.5s; }
-
-        /* Heart animation */
-        .heart-animation {
-            position: absolute;
-            color: #ef4444; /* Red heart */
-            font-size: 2.5rem; /* Slightly larger hearts */
-            animation: floatUp 3s ease-out forwards;
-            opacity: 0;
-            pointer-events: none; /* Allow clicks to pass through */
-            text-shadow: 0 0 8px rgba(239, 68, 68, 0.5); /* Soft glow */
-        }
-
-        @keyframes floatUp {
-            0% {
-                transform: translateY(0) scale(0.5);
-                opacity: 0;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-200px) scale(1.5); /* Float higher, larger */
-                opacity: 0;
-            }
-        }
-
-        /* Message box styling (for alerts/confirmations) */
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
+        .modal-content {
+            background: white;
             padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             text-align: center;
-            display: none; /* Hidden by default */
-            animation: fadeInScale 0.3s ease-out forwards;
-            border: 2px solid #f87171; /* Red border */
         }
-
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.9);
+        /* Responsive adjustments for smaller screens (mobile) */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+                border-right: none;
+                position: absolute; /* Position sidebar absolutely to slide in/out */
+                height: 100%;
+                z-index: 10;
+                transform: translateX(-100%); /* Hidden by default */
+                transition: transform 0.3s ease-in-out; /* Smooth transition */
             }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
+            .sidebar.active {
+                transform: translateX(0); /* Show sidebar */
             }
-        }
-
-        /* Love note specific animation */
-        .note-appear {
-            animation: noteAppear 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; /* Bounce effect */
-        }
-
-        @keyframes noteAppear {
-            0% {
-                opacity: 0;
-                transform: scale(0.7) translateY(50px);
+            .chat-area {
+                width: 100%; /* Chat area takes full width when sidebar is hidden */
             }
-            70% {
-                opacity: 1;
-                transform: scale(1.05) translateY(-10px);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
+            .chat-container {
+                margin: 0; /* No margin on mobile */
+                border-radius: 0;
+                box-shadow: none;
             }
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div id="app" class="w-full h-screen">
+        <!-- Authentication Section -->
+        <div id="auth-section" class="flex flex-col items-center justify-center w-full h-full bg-white rounded-lg shadow-xl p-8 max-w-md mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to Chat!</h2>
+            <div class="w-full">
+                <input type="email" id="auth-email" placeholder="Email" class="w-full px-4 py-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button id="login-btn" class="w-full bg-green-500 text-white font-semibold py-3 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out shadow-md">Login</button>
+                <p class="text-center text-gray-600 mt-4">Don't have an account? <a href="#" id="signup-link" class="text-green-600 hover:underline">Sign Up</a></p>
+                <p class="text-center text-red-500 mt-4" id="auth-error-message"></p>
+            </div>
+        </div>
 
-    <!-- Custom Message Box -->
-    <div class="message-box" id="messageBox">
-        <p class="text-xl font-semibold text-gray-800 mb-4" id="messageBoxContent"></p>
-        <button class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300" onclick="hideMessageBox()">Close</button>
+        <!-- Main Chat Section -->
+        <div id="chat-section" class="chat-container hidden">
+            <!-- Sidebar (User List) -->
+            <div class="sidebar">
+                <div class="p-4 bg-green-600 text-white flex items-center justify-between rounded-tl-xl">
+                    <h3 class="text-xl font-semibold">Chats</h3>
+                    <button id="logout-btn" class="bg-green-700 hover:bg-green-800 text-white px-3 py-1 rounded-full text-sm transition duration-300">Logout</button>
+                </div>
+                <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center">
+                    <span class="text-gray-700 font-medium mr-2">Your Username:</span>
+                    <span id="current-username" class="text-green-600 font-bold"></span>
+                </div>
+                <div class="flex-grow overflow-y-auto">
+                    <div class="p-4 text-gray-500 text-sm">Online Users</div>
+                    <div id="user-list">
+                        <!-- User items will be loaded here dynamically -->
+                        <div class="p-4 text-center text-gray-500" id="no-users-message">No other users online.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div id="chat-header" class="p-4 bg-green-600 text-white flex items-center justify-between rounded-tr-xl">
+                    <!-- Button to toggle sidebar on mobile -->
+                    <button id="toggle-sidebar-btn" class="md:hidden text-white mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <h3 id="chat-partner-name" class="text-xl font-semibold">Select a chat to start messaging</h3>
+                </div>
+                <div class="messages" id="messages-container">
+                    <!-- Messages will be loaded here dynamically -->
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="message-input" placeholder="Type a message..." class="flex-grow px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 mr-2" disabled>
+                    <button id="send-message-btn" class="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition duration-300 ease-in-out shadow-md" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Username Modal (shown after first sign-up/login) -->
+        <div id="username-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-2xl font-bold mb-4">Choose a Username</h3>
+                <p class="text-gray-700 mb-4">This will be visible to other users.</p>
+                <input type="text" id="new-username-input" placeholder="Enter your username" class="w-full px-4 py-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button id="save-username-btn" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out shadow-md">Save Username</button>
+                <p class="text-center text-red-500 mt-4" id="username-error-message"></p>
+            </div>
+        </div>
+
+        <!-- Custom Message Box Modal (replaces alert/confirm) -->
+        <div id="message-box-modal" class="modal hidden">
+            <div class="modal-content">
+                <p id="message-box-text" class="text-gray-700 mb-4"></p>
+                <button id="message-box-ok-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out shadow-md">OK</button>
+            </div>
+        </div>
     </div>
 
-    <div class="relative bg-white/95 backdrop-blur-sm p-8 md:p-12 rounded-3xl shadow-2xl max-w-lg mx-auto text-center border border-pink-300 transform rotate-[-1deg] hover:rotate-0 transition-transform duration-300">
-        <!-- Main title for Susmita -->
-        <h1 class="text-4xl md:text-5xl font-extrabold text-pink-600 mb-4 fade-in fade-in-1 drop-shadow-lg">
-            For My Sweet Susmita,
-        </h1>
+    <script type="module">
+        // Firebase SDK Imports
+        // These URLs point to the Firebase CDN and provide necessary modules.
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, orderBy, addDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        <!-- Initial romantic message/instruction -->
-        <p class="text-lg md:text-xl text-gray-700 leading-relaxed mb-6 fade-in fade-in-2">
-            Here's a special jar filled with my love notes for you.
-            Click the button below to discover a message!
-        </p>
+        // --- Firebase Configuration ---
+        // You MUST replace these placeholder values with your actual Firebase project configuration.
+        // You can find your Firebase config object in your Firebase Console:
+        // Project settings (gear icon next to "Project overview") -> "Your apps" -> Select "Web" app.
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-9OmjdMfSWP0C1Gk-4Ls9afe-5ei6lkg",
+            authDomain: "drchat-d72d9.firebaseapp.com",
+            projectId: "drchat-d72d9",
+            storageBucket: "drchat-d72d9.firebasestorage.app",
+            messagingSenderId: "687271085882",
+            appId: "1:687271085882:web:1b93bbd798bf8cb8047203"
+        };
 
-        <!-- Love Note Display Area - Styled like a jar opening -->
-        <div id="loveNoteDisplay" class="relative bg-gradient-to-br from-pink-50 to-pink-200 p-6 rounded-3xl border-4 border-pink-300 shadow-xl min-h-[140px] flex items-center justify-center mb-6 fade-in fade-in-3 overflow-hidden">
-            <p id="currentLoveNote" class="text-xl md:text-2xl text-pink-800 font-semibold italic relative z-10">
-                Your first love note awaits!
-            </p>
-            <!-- Decorative element for jar opening -->
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-8 bg-pink-400 rounded-b-full shadow-inner opacity-70"></div>
-        </div>
+        // Global variables provided by the Canvas environment.
+        // These should NOT be modified by you.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Unique ID for the app in Canvas
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Custom auth token for Canvas
 
-        <!-- Buttons Container -->
-        <div class="flex flex-col sm:flex-row justify-center gap-4 mt-6">
-            <!-- Button to pick a new note -->
-            <button id="pickNoteButton" class="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out fade-in fade-in-4 flex items-center justify-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                Pick a Love Note
-            </button>
 
-            <!-- Button to copy the current note -->
-            <button id="copyNoteButton" class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out fade-in fade-in-5 flex items-center justify-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                Copy Note
-            </button>
-        </div>
+        // --- Firebase Service Instances ---
+        let app; // Firebase app instance
+        let db;  // Firestore database instance
+        let auth; // Firebase Auth instance
 
-        <!-- Notes counter and Reset Button -->
-        <div class="flex justify-between items-center mt-6 fade-in fade-in-5">
-            <p class="text-md text-gray-600">
-                Notes read: <span id="notesCount" class="font-bold text-pink-700 text-lg">0</span>
-            </p>
-            <button id="resetButton" class="text-sm text-gray-500 hover:text-gray-700 underline transition-colors duration-200">
-                Reset Jar
-            </button>
-        </div>
+        // --- User State Variables ---
+        let currentUserId = null; // UID of the currently logged-in user
+        let currentUsername = null; // Username of the currently logged-in user
+        let selectedChatPartner = null; // Stores { uid: string, username: string } of the user currently being chatted with
+        let unsubscribeMessages = null; // Function to unsubscribe from the Firestore messages listener
 
-        <!-- Your name -->
-        <h2 class="text-2xl md:text-3xl font-bold text-pink-700 mt-8 fade-in fade-in-4">
-            With all my heart,
-        </h2>
-        <h2 class="text-3xl md:text-4xl font-extrabold text-pink-800 mt-2 fade-in fade-in-5">
-            Biswajit
-        </h2>
-    </div>
+        // --- UI Element References ---
+        // Authentication Section
+        const authSection = document.getElementById('auth-section');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const loginBtn = document.getElementById('login-btn');
+        const signupLink = document.getElementById('signup-link');
+        const authErrorMessage = document.getElementById('auth-error-message');
 
-    <script>
-        // Array of romantic messages (expanded)
-        const loveNotes = [
-            "You are the most beautiful person I know, inside and out. My love for you is endless.",
-            "Every moment with you is a cherished memory, a precious gift I hold dear.",
-            "Your smile brightens my entire day and fills my world with pure joy.",
-            "I fall in love with you a little more each and every day, Susmita.",
-            "Thank you for being you, my amazing Susmita. You are truly wonderful.",
-            "My world is so much better with you in it. You complete me.",
-            "You inspire me in countless ways, pushing me to be a better person.",
-            "Just thinking about you makes me happy and brings a smile to my face.",
-            "I'm so incredibly lucky to have you by my side, my love.",
-            "You're not just my girlfriend, you're my best friend, my confidante, my everything.",
-            "I adore everything about you – your laughter, your kindness, your spirit.",
-            "My love for you grows stronger with each passing moment, like a beautiful melody.",
-            "You are my greatest adventure, and I can't wait to explore more with you.",
-            "I can't imagine my life without you, Susmita. You are my anchor.",
-            "You complete me, my love. With you, I am whole.",
-            "Even when things are tough, my love for you never wavers. We'll get through anything together.",
-            "I'm truly sorry if I've hurt you. Please know my heart is always yours, seeking your forgiveness.",
-            "Let's make things right and create even more beautiful memories, hand in hand.",
-            "You are my everything, my sun, my moon, and all my stars.",
-            "Forever and always, my love. My heart belongs to you.",
-            "You're the missing piece I never knew I needed.",
-            "My favorite place in the world is next to you.",
-            "You make ordinary moments extraordinary.",
-            "Thank you for your patience and understanding.",
-            "I promise to always try my best for us.",
-            "You are my dream come true.",
-            "Thinking of you makes my heart skip a beat.",
-            "You're the reason I believe in magic.",
-            "Every day is an adventure with you.",
-            "I cherish our bond more than words can say."
-        ];
+        // Main Chat Section
+        const chatSection = document.getElementById('chat-section');
+        const logoutBtn = document.getElementById('logout-btn');
+        const currentUserDisplay = document.getElementById('current-username');
+        const userListDiv = document.getElementById('user-list');
+        const noUsersMessage = document.getElementById('no-users-message');
+        const chatHeader = document.getElementById('chat-header');
+        const chatPartnerName = document.getElementById('chat-partner-name');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendMessageBtn = document.getElementById('send-message-btn');
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+        const sidebar = document.querySelector('.sidebar');
 
-        let notesReadCount = 0;
-        let lastNoteIndex = -1; // To avoid immediate repetition
-        let currentDisplayedNote = ""; // To store the note currently shown for copying
+        // Loading Spinner
+        const loadingSpinner = document.getElementById('loading-spinner');
 
-        const currentLoveNoteElement = document.getElementById('currentLoveNote');
-        const pickNoteButton = document.getElementById('pickNoteButton');
-        const notesCountElement = document.getElementById('notesCount');
-        const resetButton = document.getElementById('resetButton');
-        const copyNoteButton = document.getElementById('copyNoteButton');
+        // Username Modal
+        const usernameModal = document.getElementById('username-modal');
+        const newUsernameInput = document.getElementById('new-username-input');
+        const saveUsernameBtn = document.getElementById('save-username-btn');
+        const usernameErrorMessage = document.getElementById('username-error-message');
 
-        // Function to show a message box (replaces alert())
+        // Custom Message Box Modal
+        const messageBoxModal = document.getElementById('message-box-modal');
+        const messageBoxText = document.getElementById('message-box-text');
+        const messageBoxOkBtn = document.getElementById('message-box-ok-btn');
+
+        // --- Utility Functions ---
+
+        /**
+         * Shows the global loading spinner.
+         */
+        function showLoading() {
+            loadingSpinner.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the global loading spinner.
+         */
+        function hideLoading() {
+            loadingSpinner.classList.add('hidden');
+        }
+
+        /**
+         * Displays a custom message box to the user.
+         * @param {string} message - The message to display.
+         */
         function showMessageBox(message) {
-            const messageBox = document.getElementById('messageBox');
-            const messageBoxContent = document.getElementById('messageBoxContent');
-            messageBoxContent.textContent = message;
-            messageBox.style.display = 'block';
+            messageBoxText.textContent = message;
+            messageBoxModal.classList.remove('hidden');
         }
 
-        // Function to hide the message box
+        /**
+         * Hides the custom message box.
+         */
         function hideMessageBox() {
-            const messageBox = document.getElementById('messageBox');
-            messageBox.style.display = 'none';
+            messageBoxModal.classList.add('hidden');
         }
 
-        // Function to pick and display a new love note
-        function pickNewLoveNote() {
-            let randomIndex;
-            do {
-                randomIndex = Math.floor(Math.random() * loveNotes.length);
-            } while (randomIndex === lastNoteIndex && loveNotes.length > 1); // Ensure different note if possible
-
-            const newNote = loveNotes[randomIndex];
-            lastNoteIndex = randomIndex;
-            currentDisplayedNote = newNote; // Update the current displayed note for copying
-
-            // Apply animation class before changing content
-            currentLoveNoteElement.classList.remove('note-appear'); // Remove to re-trigger
-            void currentLoveNoteElement.offsetWidth; // Trigger reflow for animation
-            currentLoveNoteElement.textContent = newNote;
-            currentLoveNoteElement.classList.add('note-appear');
-
-            notesReadCount++;
-            notesCountElement.textContent = notesReadCount;
-
-            // Show a small confirmation message if it's the first note or a significant one
-            if (notesReadCount === 1) {
-                showMessageBox("Here's your first love note!");
-            } else if (notesReadCount % 5 === 0) { // Every 5 notes
-                showMessageBox(`You've read ${notesReadCount} love notes! Keep going!`);
-            }
+        /**
+         * Generates a unique chat ID for two users by sorting their UIDs and joining them.
+         * This ensures the chat ID is consistent regardless of who initiates the chat.
+         * @param {string} user1Uid - UID of the first user.
+         * @param {string} user2Uid - UID of the second user.
+         * @returns {string} The unique chat ID.
+         */
+        function getChatId(user1Uid, user2Uid) {
+            return [user1Uid, user2Uid].sort().join('_');
         }
 
-        // Event listener for the "Pick a Love Note" button
-        pickNoteButton.addEventListener('click', pickNewLoveNote);
+        // --- Firebase Initialization & User Profile Management ---
 
-        // Event listener for the "Reset Jar" button
-        resetButton.addEventListener('click', () => {
-            notesReadCount = 0;
-            notesCountElement.textContent = notesReadCount;
-            currentLoveNoteElement.textContent = "Your first love note awaits!";
-            currentLoveNoteElement.classList.remove('note-appear'); // Remove animation class
-            lastNoteIndex = -1; // Reset last note index
-            currentDisplayedNote = ""; // Clear displayed note for copying
-            showMessageBox("The jar has been reset! Ready for new notes.");
-        });
+        /**
+         * Initializes Firebase app, Firestore, and Authentication.
+         * Sets up the authentication state listener.
+         */
+        async function initializeFirebase() {
+            try {
+                showLoading(); // Show loading spinner
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-        // Event listener for the "Copy Note" button
-        copyNoteButton.addEventListener('click', () => {
-            if (currentDisplayedNote) {
-                // Use document.execCommand('copy') for clipboard functionality in iframes
-                const textArea = document.createElement("textarea");
-                textArea.value = currentDisplayedNote;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showMessageBox("Love note copied to clipboard!");
-                } catch (err) {
-                    showMessageBox("Failed to copy note. Please try again manually.");
+                // Authenticate with custom token if provided by Canvas, otherwise sign in anonymously.
+                // This is crucial for the Canvas environment.
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
                 }
-                document.body.removeChild(textArea);
-            } else {
-                showMessageBox("There's no note to copy yet! Pick one first.");
+
+                // Listen for changes in the user's authentication state.
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        // After successful authentication, check if the user has a username set.
+                        await checkAndSetUsername(user.uid);
+                    } else {
+                        // User is logged out or not authenticated.
+                        currentUserId = null;
+                        currentUsername = null;
+                        displayAuthSection(); // Show the login/signup screen
+                    }
+                    hideLoading(); // Hide loading spinner once auth state is processed
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessageBox("Failed to initialize app. Please try again later.");
+                hideLoading();
             }
-        });
+        }
 
+        /**
+         * Checks if the current user has a username stored in Firestore.
+         * If not, prompts the user to set one.
+         * @param {string} uid - The UID of the current user.
+         */
+        async function checkAndSetUsername(uid) {
+            try {
+                showLoading();
+                // Reference to the user's private profile document
+                const userDocRef = doc(db, `artifacts/${appId}/users/${uid}/profile/data`, 'userProfile');
+                const userDocSnap = await getDoc(userDocRef);
 
-        // Function to create and animate a heart emoji
-        function createHeart() {
-            const heart = document.createElement('span');
-            heart.classList.add('heart-animation');
-            heart.innerHTML = '&#x2764;&#xFE0F;'; // Red Heart Emoji
+                if (userDocSnap.exists()) {
+                    // If profile exists, get the username
+                    currentUsername = userDocSnap.data().username;
+                    displayChatSection(); // Show the main chat interface
+                    fetchUsers(); // Start fetching other users for the chat list
+                } else {
+                    // If no profile, user needs to set a username
+                    showUsernameModal();
+                }
+            } catch (error) {
+                console.error("Error checking/setting username:", error);
+                showMessageBox("Failed to load user profile. Please try again.");
+                displayAuthSection(); // Fallback to auth if profile fails
+            } finally {
+                hideLoading();
+            }
+        }
 
-            // Random starting position at the bottom of the screen
-            const startX = Math.random() * window.innerWidth;
-            const startY = window.innerHeight + 20; // Start below the screen
-            heart.style.left = `${startX}px`;
-            heart.style.top = `${startY}px`;
+        /**
+         * Saves the chosen username to Firestore for the current user.
+         * Also adds the user to a public 'users' collection for discovery.
+         */
+        async function saveUsername() {
+            const username = newUsernameInput.value.trim();
+            if (!username) {
+                usernameErrorMessage.textContent = "Username cannot be empty.";
+                return;
+            }
 
-            document.body.appendChild(heart);
+            if (currentUserId) {
+                try {
+                    showLoading();
+                    // Check if username already exists in the public users list
+                    const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                    const q = query(usersRef, where("username", "==", username));
+                    const querySnapshot = await getDocs(q);
 
-            // Remove heart after animation to prevent DOM clutter
-            heart.addEventListener('animationend', () => {
-                heart.remove();
+                    if (!querySnapshot.empty) {
+                        usernameErrorMessage.textContent = "This username is already taken. Please choose another.";
+                        return;
+                    }
+
+                    // Save username to the user's private profile
+                    const userProfileDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile/data`, 'userProfile');
+                    await setDoc(userProfileDocRef, { username: username, uid: currentUserId });
+
+                    // Add user to a public collection for other users to see
+                    const publicUserDocRef = doc(db, `artifacts/${appId}/public/data/users`, currentUserId);
+                    await setDoc(publicUserDocRef, { username: username, uid: currentUserId });
+
+                    currentUsername = username;
+                    usernameModal.classList.add('hidden'); // Hide the modal
+                    displayChatSection(); // Show the main chat
+                    fetchUsers(); // Refresh the user list
+                } catch (error) {
+                    console.error("Error saving username:", error);
+                    usernameErrorMessage.textContent = "Failed to save username. Please try again.";
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        // --- UI Display State Management ---
+
+        /**
+         * Shows the authentication section and hides others.
+         */
+        function displayAuthSection() {
+            authSection.classList.remove('hidden');
+            chatSection.classList.add('hidden');
+            usernameModal.classList.add('hidden');
+            authErrorMessage.textContent = ''; // Clear previous errors
+            authEmailInput.value = '';
+            authPasswordInput.value = '';
+        }
+
+        /**
+         * Shows the main chat section and hides others.
+         * Resets the chat area to a default state.
+         */
+        function displayChatSection() {
+            authSection.classList.add('hidden');
+            chatSection.classList.remove('hidden');
+            currentUserDisplay.textContent = currentUsername; // Display current user's username
+
+            // Reset chat area to initial state
+            chatPartnerName.textContent = "Select a chat to start messaging";
+            messagesContainer.innerHTML = '';
+            messageInput.disabled = true;
+            sendMessageBtn.disabled = true;
+            selectedChatPartner = null;
+            if (unsubscribeMessages) {
+                unsubscribeMessages(); // Stop listening to any previous chat
+            }
+        }
+
+        /**
+         * Shows the modal for setting a username.
+         */
+        function showUsernameModal() {
+            usernameModal.classList.remove('hidden');
+            newUsernameInput.value = ''; // Clear input field
+            usernameErrorMessage.textContent = ''; // Clear previous errors
+        }
+
+        // --- User List and Chat Selection ---
+
+        /**
+         * Fetches and displays a real-time list of other registered users.
+         */
+        function fetchUsers() {
+            if (!currentUserId) return; // Ensure user is logged in
+
+            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+            // Query to get all public user profiles, ordered by username
+            const q = query(usersRef, orderBy("username"));
+
+            // Set up a real-time listener for the users collection
+            onSnapshot(q, (snapshot) => {
+                userListDiv.innerHTML = ''; // Clear existing list items
+                let hasOtherUsers = false;
+                snapshot.forEach((doc) => {
+                    const userData = doc.data();
+                    // Don't show the current user in the list of chat partners
+                    if (userData.uid !== currentUserId) {
+                        hasOtherUsers = true;
+                        const userItem = document.createElement('div');
+                        userItem.classList.add('user-list-item', 'flex', 'items-center', 'space-x-3', 'rounded-lg');
+                        // Display user's initial in a circle
+                        userItem.innerHTML = `
+                            <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold text-lg">${userData.username.charAt(0).toUpperCase()}</div>
+                            <span class="font-medium text-gray-800">${userData.username}</span>
+                        `;
+                        userItem.dataset.uid = userData.uid; // Store UID for later use
+                        userItem.dataset.username = userData.username; // Store username
+                        // Add click listener to select this user for chat
+                        userItem.addEventListener('click', () => selectChatPartner(userData.uid, userData.username));
+                        userListDiv.appendChild(userItem);
+                    }
+                });
+
+                // Show/hide "No other users" message
+                if (!hasOtherUsers) {
+                    noUsersMessage.classList.remove('hidden');
+                } else {
+                    noUsersMessage.classList.add('hidden');
+                }
+
+                // Re-highlight the selected user if they are still in the list
+                if (selectedChatPartner) {
+                    const activeItem = userListDiv.querySelector(`[data-uid="${selectedChatPartner.uid}"]`);
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+                    }
+                }
+            }, (error) => {
+                console.error("Error fetching users:", error);
+                showMessageBox("Failed to load user list.");
             });
         }
 
-        // Create hearts at a regular interval
-        setInterval(createHeart, 800); // Create a new heart every 800ms
+        /**
+         * Handles selecting a chat partner from the user list.
+         * @param {string} uid - The UID of the selected chat partner.
+         * @param {string} username - The username of the selected chat partner.
+         */
+        function selectChatPartner(uid, username) {
+            // If the same user is clicked again, do nothing
+            if (selectedChatPartner && selectedChatPartner.uid === uid) {
+                return;
+            }
+
+            // Remove 'active' class from previously selected item
+            const activeItem = userListDiv.querySelector('.user-list-item.active');
+            if (activeItem) {
+                activeItem.classList.remove('active');
+            }
+
+            // Add 'active' class to the newly selected item
+            const newItem = userListDiv.querySelector(`[data-uid="${uid}"]`);
+            if (newItem) {
+                newItem.classList.add('active');
+            }
+
+            selectedChatPartner = { uid, username };
+            chatPartnerName.textContent = selectedChatPartner.username; // Update chat header
+            messagesContainer.innerHTML = ''; // Clear messages from previous chat
+            messageInput.disabled = false; // Enable message input
+            sendMessageBtn.disabled = false; // Enable send button
+            messageInput.focus(); // Focus on input field
+
+            // Hide sidebar on mobile after selecting a chat partner
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+            }
+
+            listenForMessages(); // Start listening for messages in the new chat
+        }
+
+        // --- Messaging Logic ---
+
+        /**
+         * Sets up a real-time listener for messages in the currently selected chat.
+         */
+        function listenForMessages() {
+            if (unsubscribeMessages) {
+                unsubscribeMessages(); // Unsubscribe from any previously active listener
+            }
+
+            if (!currentUserId || !selectedChatPartner) return;
+
+            // Get the unique chat ID for the current pair of users
+            const chatId = getChatId(currentUserId, selectedChatPartner.uid);
+            // Reference to the messages subcollection for this chat
+            const messagesRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+            // Query messages, ordered by timestamp
+            const q = query(messagesRef, orderBy("timestamp"));
+
+            // Set up a real-time listener
+            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+                messagesContainer.innerHTML = ''; // Clear messages to re-render all
+                snapshot.forEach((doc) => {
+                    const message = doc.data();
+                    displayMessage(message); // Display each message
+                });
+                // Scroll to the bottom of the messages container to show the latest message
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, (error) => {
+                console.error("Error listening for messages:", error);
+                showMessageBox("Failed to load messages.");
+            });
+        }
+
+        /**
+         * Sends a message to the currently selected chat partner.
+         */
+        async function sendMessage() {
+            const messageText = messageInput.value.trim();
+            // Ensure message is not empty and a chat partner is selected
+            if (!messageText || !currentUserId || !selectedChatPartner) return;
+
+            const chatId = getChatId(currentUserId, selectedChatPartner.uid);
+            const messagesRef = collection(db, `artifacts/${appId}/public/data/chats/${chatId}/messages`);
+
+            try {
+                showLoading();
+                await addDoc(messagesRef, {
+                    senderId: currentUserId,
+                    senderUsername: currentUsername,
+                    receiverId: selectedChatPartner.uid,
+                    message: messageText,
+                    timestamp: new Date(), // Use current timestamp
+                });
+                messageInput.value = ''; // Clear the input field after sending
+            } catch (error) {
+                console.error("Error sending message:", error);
+                showMessageBox("Failed to send message. Please try again.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Displays a single message in the messages container.
+         * @param {object} message - The message object from Firestore.
+         */
+        function displayMessage(message) {
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble', 'relative', 'group');
+
+            const isSentByCurrentUser = message.senderId === currentUserId;
+            if (isSentByCurrentUser) {
+                messageBubble.classList.add('message-sent');
+            } else {
+                messageBubble.classList.add('message-received');
+                // Display sender's username for received messages
+                const senderNameSpan = document.createElement('span');
+                senderNameSpan.classList.add('text-xs', 'font-semibold', 'text-gray-600', 'mb-1', 'block');
+                senderNameSpan.textContent = message.senderUsername;
+                messageBubble.appendChild(senderNameSpan);
+            }
+
+            const messageTextDiv = document.createElement('div');
+            messageTextDiv.textContent = message.message;
+            messageTextDiv.classList.add('text-gray-900');
+            messageBubble.appendChild(messageTextDiv);
+
+            const timestampSpan = document.createElement('span');
+            timestampSpan.classList.add('message-time');
+            // Convert Firestore Timestamp to JavaScript Date object if necessary
+            const date = message.timestamp.toDate ? message.timestamp.toDate() : new Date(message.timestamp);
+            timestampSpan.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            messageBubble.appendChild(timestampSpan);
+
+            messagesContainer.appendChild(messageBubble);
+        }
+
+        // --- Event Listeners ---
+
+        // Login button click handler
+        loginBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (!email || !password) {
+                authErrorMessage.textContent = "Please enter email and password.";
+                return;
+            }
+            try {
+                showLoading();
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged listener will handle the UI update after successful login
+            } catch (error) {
+                console.error("Login error:", error);
+                authErrorMessage.textContent = "Login failed: " + error.message;
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Sign Up link click handler
+        signupLink.addEventListener('click', async (e) => {
+            e.preventDefault(); // Prevent default link behavior
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (!email || !password) {
+                authErrorMessage.textContent = "Please enter email and password to sign up.";
+                return;
+            }
+            try {
+                showLoading();
+                await createUserWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged listener will handle the UI update and prompt for username
+            } catch (error) {
+                console.error("Sign up error:", error);
+                authErrorMessage.textContent = "Sign up failed: " + error.message;
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Logout button click handler
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                showLoading();
+                await signOut(auth);
+                // onAuthStateChanged listener will handle the UI update after successful logout
+            } catch (error) {
+                console.error("Logout error:", error);
+                showMessageBox("Failed to log out.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Save Username button click handler
+        saveUsernameBtn.addEventListener('click', saveUsername);
+        // Allow pressing Enter in username input to save
+        newUsernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveUsername();
+            }
+        });
+
+        // Send Message button click handler
+        sendMessageBtn.addEventListener('click', sendMessage);
+        // Allow pressing Enter in message input to send
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendMessageBtn.disabled) {
+                sendMessage();
+            }
+        });
+
+        // Toggle sidebar button click handler (for mobile responsiveness)
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // OK button for custom message box
+        messageBoxOkBtn.addEventListener('click', hideMessageBox);
+
+        // --- Initial App Load ---
+        // Initialize Firebase when the window finishes loading
+        window.onload = initializeFirebase;
+
+        /*
+        * IMPORTANT FIRESTORE SECURITY RULES:
+        *
+        * For this application to work securely and correctly, you MUST set up Firestore Security Rules in your Firebase project.
+        * These rules control who can read and write data in your database.
+        *
+        * Go to your Firebase Console -> Firestore Database -> Rules tab.
+        * Replace the existing rules with something similar to this.
+        * Make sure to replace `appId` with the actual value if you hardcode it,
+        * otherwise, ensure your `__app_id` variable is correctly passed.
+        *
+        * rules_version = '2';
+        * service cloud.firestore {
+        * match /databases/{database}/documents {
+        *
+        * // Public user profiles:
+        * // This collection stores usernames and UIDs for all registered users,
+        * // allowing users to discover and chat with each other.
+        * match /artifacts/{appId}/public/data/users/{userId} {
+        * // Any authenticated user can read the list of public user profiles.
+        * allow read: if request.auth != null;
+        * // A user can only create or update their own public profile.
+        * allow create: if request.auth != null && request.auth.uid == userId;
+        * allow update: if request.auth != null && request.auth.uid == userId;
+        * // Public profiles cannot be deleted by users through the client.
+        * allow delete: if false;
+        * }
+        *
+        * // Private user profile data:
+        * // This stores the username linked to the user's UID.
+        * match /artifacts/{appId}/users/{userId}/profile/data/userProfile {
+        * // Only the owner of the profile can read or write to it.
+        * allow read, write: if request.auth != null && request.auth.uid == userId;
+        * }
+        *
+        * // Chat messages:
+        * // Messages are stored in subcollections within a 'chats' collection.
+        * // The 'chatId' is generated by sorting the UIDs of the two participants (e.g., "uid1_uid2").
+        * match /artifacts/{appId}/public/data/chats/{chatId}/messages/{messageId} {
+        * // Allow read access if the authenticated user's UID is part of the chatId.
+        * // This ensures only participants of a chat can read its messages.
+        * allow read: if request.auth != null && (chatId.matches(request.auth.uid + "_.*") || chatId.matches(".*_" + request.auth.uid));
+        * // Allow create access if the authenticated user's UID is part of the chatId.
+        * // This ensures only participants can add messages to their chat.
+        * allow create: if request.auth != null && (chatId.matches(request.auth.uid + "_.*") || chatId.matches(".*_" + request.auth.uid));
+        * // Messages cannot be updated or deleted after being sent.
+        * allow update, delete: if false;
+        * }
+        * }
+        * }
+        */
     </script>
 </body>
 </html>
