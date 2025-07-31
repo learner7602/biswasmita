@@ -3,903 +3,500 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Chat</title>
-    <!-- Tailwind CSS CDN for modern styling -->
+    <title>Dr. Chat - A New Experience</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter for a clean look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom CSS for specific layout and styling not directly covered by Tailwind */
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5; /* Light grey background for the page */
         }
-        #app {
-            display: flex;
-            height: 100vh; /* Full viewport height */
-            overflow: hidden; /* Prevent scrollbars on the main app container */
+        /* Custom scrollbar for a cleaner look */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
         }
-        .chat-container {
-            display: flex;
-            flex-grow: 1; /* Allows the chat container to take available space */
-            background-color: #ffffff;
-            border-radius: 1rem; /* Rounded corners for the main chat box */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Subtle shadow */
-            margin: 1rem; /* Margin around the chat box */
-            overflow: hidden; /* Ensures content inside respects border-radius */
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
-        .sidebar {
-            width: 30%; /* Sidebar width */
-            min-width: 280px; /* Minimum width for sidebar */
-            max-width: 350px; /* Maximum width for sidebar */
-            border-right: 1px solid #e0e0e0; /* Separator line */
-            display: flex;
-            flex-direction: column;
-            background-color: #f8f9fa; /* Lighter background for sidebar */
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
         }
-        .chat-area {
-            flex-grow: 1; /* Chat area takes remaining space */
-            display: flex;
-            flex-direction: column;
-            position: relative;
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
-        .messages {
-            flex-grow: 1; /* Message area grows to fill space */
-            overflow-y: auto; /* Enable vertical scrolling for messages */
-            padding: 1rem;
-            background-color: #e5ddd5; /* WhatsApp chat background color */
-            display: flex;
-            flex-direction: column;
-        }
-        .message-bubble {
-            max-width: 70%; /* Max width for message bubbles */
-            padding: 0.5rem 0.8rem;
-            border-radius: 0.75rem; /* Rounded corners for bubbles */
-            margin-bottom: 0.5rem;
-            word-wrap: break-word; /* Ensures long words break and wrap */
-        }
-        .message-sent {
-            background-color: #dcf8c6; /* Greenish for messages sent by current user */
-            align-self: flex-end; /* Aligns to the right */
-        }
-        .message-received {
-            background-color: #ffffff; /* White for messages received from others */
-            align-self: flex-start; /* Aligns to the left */
-        }
-        .message-time {
-            font-size: 0.7rem;
-            color: #888;
-            margin-top: 0.2rem;
-            text-align: right;
-        }
-        .chat-input-area {
-            padding: 1rem;
-            background-color: #f0f2f5;
-            border-top: 1px solid #e0e0e0;
-            display: flex;
-            align-items: center;
-        }
-        .user-list-item {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s; /* Smooth hover effect */
-        }
-        .user-list-item:hover {
-            background-color: #f0f0f0;
-        }
-        .user-list-item.active {
-            background-color: #e0e0e0; /* Highlight active chat partner */
-        }
-        /* Spinner animation */
+        /* Spinner Animation */
         .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #25d366; /* WhatsApp green */
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left-color: #ffffff;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        /* Modal styling */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* Semi-transparent overlay */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000; /* Ensure modal is on top */
-        }
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-        /* New UI for Auth Section */
-        .auth-card {
-            background-color: #ffffff;
-            border-radius: 1rem;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            padding: 2.5rem;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-        }
-        .auth-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .auth-input:focus {
-            outline: none;
-            border-color: #25d366;
-            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2);
-        }
-        .auth-button {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background-color: #25d366;
-            color: white;
-            font-weight: 600;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s, transform 0.1s;
-            cursor: pointer;
-            border: none;
-        }
-        .auth-button:hover {
-            background-color: #1ea750;
-            transform: translateY(-1px);
-        }
-        .auth-toggle-link {
-            color: #25d366;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-        .auth-toggle-link:hover {
-            color: #1ea750;
-            text-decoration: underline;
-        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div id="app" class="w-full h-screen flex items-center justify-center">
-        <!-- Authentication Section (New UI) -->
-        <div id="auth-section" class="auth-card">
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome to Dr. Chat!</h2>
-            <div class="w-full">
-                <input type="email" id="auth-email" placeholder="Email" class="auth-input">
-                <input type="password" id="auth-password" placeholder="Password" class="auth-input">
-                <button id="auth-main-button" class="auth-button mb-4">Login</button>
-                <p class="text-center text-gray-600">
-                    <span id="auth-toggle-text">Don't have an account?</span>
-                    <a href="#" id="auth-toggle-link" class="auth-toggle-link ml-1">Sign Up</a>
-                </p>
-                <p class="text-center text-red-500 mt-4" id="auth-error-message"></p>
-            </div>
-        </div>
+<body class="bg-gray-100">
 
-        <!-- Main Chat Section -->
-        <div id="chat-section" class="chat-container hidden">
-            <!-- Sidebar (User List) -->
-            <div class="sidebar">
-                <div class="p-4 bg-green-600 text-white flex items-center justify-between rounded-tl-xl">
-                    <h3 class="text-xl font-semibold">Chats</h3>
-                    <button id="logout-btn" class="bg-green-700 hover:bg-green-800 text-white px-3 py-1 rounded-full text-sm transition duration-300">Logout</button>
-                </div>
-                <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center">
-                    <span class="text-gray-700 font-medium mr-2">Your Username:</span>
-                    <span id="current-username" class="text-green-600 font-bold"></span>
-                </div>
-                <div class="flex-grow overflow-y-auto">
-                    <div class="p-4 text-gray-500 text-sm">Online Users</div>
-                    <div id="user-list">
-                        <!-- User items will be loaded here dynamically -->
-                        <div class="p-4 text-center text-gray-500" id="no-users-message">No other users online.</div>
-                    </div>
-                </div>
-            </div>
+    <div id="app-container" class="w-full h-screen">
 
-            <!-- Chat Area -->
-            <div class="chat-area">
-                <div id="chat-header" class="p-4 bg-green-600 text-white flex items-center justify-between rounded-tr-xl">
-                    <!-- Button to toggle sidebar on mobile -->
-                    <button id="toggle-sidebar-btn" class="md:hidden text-white mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                    <h3 id="chat-partner-name" class="text-xl font-semibold">Select a chat to start messaging</h3>
-                </div>
-                <div class="messages" id="messages-container">
-                    <!-- Messages will be loaded here dynamically -->
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="message-input" placeholder="Type a message..." class="flex-grow px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 mr-2" disabled>
-                    <button id="send-message-btn" class="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition duration-300 ease-in-out shadow-md" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading Spinner -->
-        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 hidden">
+        <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
             <div class="spinner"></div>
         </div>
 
-        <!-- Username Modal (shown after first sign-up/login) -->
-        <div id="username-modal" class="modal hidden">
-            <div class="modal-content">
-                <h3 class="text-2xl font-bold mb-4">Choose a Username</h3>
-                <p class="text-gray-700 mb-4">This will be visible to other users.</p>
-                <input type="text" id="new-username-input" placeholder="Enter your username" class="w-full px-4 py-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                <button id="save-username-btn" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out shadow-md">Save Username</button>
-                <p class="text-center text-red-500 mt-4" id="username-error-message"></p>
+        <div id="auth-section" class="w-full h-full flex items-center justify-center bg-gray-200">
+            <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg">
+                <div id="login-view">
+                    <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Welcome Back to Dr. Chat</h2>
+                    <p class="text-center text-gray-500 mb-6">Sign in to continue.</p>
+                    <div class="space-y-4">
+                        <input type="email" id="login-email" placeholder="Email Address" class="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <p id="login-error" class="text-red-500 text-sm mt-4 text-center h-4"></p>
+                    <button id="login-btn" class="w-full mt-4 bg-teal-500 text-white font-bold py-3 rounded-lg hover:bg-teal-600 transition-colors">Login</button>
+                    <p class="text-center text-gray-600 mt-6">
+                        Don't have an account? <a href="#" id="show-signup-link" class="font-semibold text-teal-500 hover:text-teal-600">Sign Up</a>
+                    </p>
+                </div>
+                <div id="signup-view" class="hidden">
+                    <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Create Your Account</h2>
+                    <p class="text-center text-gray-500 mb-6">Join Dr. Chat today!</p>
+                    <div class="space-y-4">
+                        <input type="text" id="signup-username" placeholder="Username" class="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <input type="email" id="signup-email" placeholder="Email Address" class="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <input type="password" id="signup-password" placeholder="Password" class="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                     <p id="signup-error" class="text-red-500 text-sm mt-4 text-center h-4"></p>
+                    <button id="signup-btn" class="w-full mt-4 bg-teal-500 text-white font-bold py-3 rounded-lg hover:bg-teal-600 transition-colors">Sign Up</button>
+                    <p class="text-center text-gray-600 mt-6">
+                        Already have an account? <a href="#" id="show-login-link" class="font-semibold text-teal-500 hover:text-teal-600">Login</a>
+                    </p>
+                </div>
             </div>
         </div>
 
-        <!-- Custom Message Box Modal (replaces alert/confirm) -->
-        <div id="message-box-modal" class="modal hidden">
-            <div class="modal-content">
-                <p id="message-box-text" class="text-gray-700 mb-4"></p>
-                <button id="message-box-ok-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition duration-300 ease-in-out shadow-md">OK</button>
+        <div id="chat-section" class="w-full h-full flex hidden">
+            <aside class="w-full md:w-1/3 lg:w-1/4 h-full bg-gray-50 border-r border-gray-200 flex flex-col">
+                <header class="p-4 border-b border-gray-200 flex justify-between items-center bg-white">
+                    <div id="current-user-profile" class="flex items-center space-x-3">
+                        </div>
+                    <button id="logout-btn" title="Logout" class="text-gray-500 hover:text-red-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </header>
+
+                <div class="p-4 bg-gray-100">
+                     <button id="new-chat-btn" class="w-full bg-teal-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-600 transition-colors">New Chat</button>
+                </div>
+
+                <div id="chat-list" class="flex-grow overflow-y-auto custom-scrollbar">
+                    <div id="no-chats-message" class="text-center p-8 text-gray-500">Your chats will appear here.</div>
+                </div>
+            </aside>
+
+            <main class="w-full md:w-2/3 lg:w-3/4 h-full flex flex-col bg-gray-200">
+                <div id="welcome-screen" class="flex-grow flex flex-col items-center justify-center text-center text-gray-500">
+                    <svg class="w-24 h-24 mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.08-3.083A6.96 6.96 0 011.999 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.932 11.672A5.485 5.485 0 0010 13c2.757 0 5-1.79 5-4s-2.243-4-5-4-5 1.79-5 4c0 .647.161 1.26.44 1.805L4 14.5l.932-2.828z" clip-rule="evenodd"></path></svg>
+                    <h2 class="text-2xl font-semibold">Welcome to Dr. Chat</h2>
+                    <p>Select a chat to start messaging or create a new one.</p>
+                </div>
+
+                <div id="chat-window" class="flex-grow flex-col hidden">
+                    <header id="chat-header" class="p-4 bg-white border-b border-gray-200 flex items-center space-x-4">
+                        </header>
+                    <div id="messages-container" class="flex-grow p-4 md:p-6 overflow-y-auto custom-scrollbar space-y-4">
+                        </div>
+                    <footer class="p-4 bg-white border-t border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <input type="text" id="message-input" placeholder="Type a message..." class="flex-grow w-full px-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <button id="send-btn" class="bg-teal-500 text-white rounded-full p-3 hover:bg-teal-600 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </button>
+                        </div>
+                    </footer>
+                </div>
+            </main>
+        </div>
+        
+        <div id="new-chat-modal" class="fixed inset-0 z-40 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-sm">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="font-semibold text-lg">Start a New Chat</h3>
+                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+                </div>
+                <div id="user-list-container" class="p-4 max-h-80 overflow-y-auto custom-scrollbar">
+                    </div>
             </div>
         </div>
+
     </div>
 
     <script type="module">
-        // Firebase SDK Imports
-        // These URLs point to the Firebase CDN and provide necessary modules.
+        // --- Firebase SDK Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, orderBy, addDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, addDoc, orderBy, getDocs, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        // Your actual Firebase project configuration, as copied from your Firebase Console.
         const firebaseConfig = {
             apiKey: "AIzaSyB-9OmjdMfSWP0C1Gk-4Ls9afe-5ei6lkg",
-  authDomain: "drchat-d72d9.firebaseapp.com",
-  projectId: "drchat-d72d9",
-  storageBucket: "drchat-d72d9.firebasestorage.app",
-  messagingSenderId: "687271085882",
-  appId: "1:687271085882:web:1b93bbd798bf8cb8047203"
+            authDomain: "drchat-d72d9.firebaseapp.com",
+            projectId: "drchat-d72d9",
+            storageBucket: "drchat-d72d9.firebasestorage.app",
+            messagingSenderId: "687271085882",
+            appId: "1:687271085882:web:1b93bbd798bf8cb8047203"
         };
 
-        // Global variables provided by the Canvas environment.
-        // These should NOT be modified by you.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Unique ID for the app in Canvas
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Custom auth token for Canvas
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
+        // --- Global State ---
+        let currentUser = null;
+        let unsubscribeChatList = null;
+        let unsubscribeMessages = null;
 
-        // --- Firebase Service Instances ---
-        let app; // Firebase app instance
-        let db;  // Firestore database instance
-        let auth; // Firebase Auth instance
-
-        // --- User State Variables ---
-        let currentUserId = null; // UID of the currently logged-in user
-        let currentUsername = null; // Username of the currently logged-in user
-        let selectedChatPartner = null; // Stores { uid: string, username: string } of the user currently being chatted with
-        let unsubscribeMessages = null; // Function to unsubscribe from the Firestore messages listener
-
-        // --- UI Element References ---
-        // Authentication Section
+        // --- UI Elements ---
+        const loadingOverlay = document.getElementById('loading-overlay');
         const authSection = document.getElementById('auth-section');
-        const authEmailInput = document.getElementById('auth-email');
-        const authPasswordInput = document.getElementById('auth-password');
-        const authMainButton = document.getElementById('auth-main-button'); // Renamed for dynamic text
-        const authToggleLink = document.getElementById('auth-toggle-link');
-        const authToggleText = document.getElementById('auth-toggle-text');
-        const authErrorMessage = document.getElementById('auth-error-message');
-
-        // Main Chat Section
         const chatSection = document.getElementById('chat-section');
+        const loginView = document.getElementById('login-view');
+        const signupView = document.getElementById('signup-view');
+        
+        // Auth UI
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const showSignupLink = document.getElementById('show-signup-link');
+        const showLoginLink = document.getElementById('show-login-link');
         const logoutBtn = document.getElementById('logout-btn');
-        const currentUserDisplay = document.getElementById('current-username');
-        const userListDiv = document.getElementById('user-list');
-        const noUsersMessage = document.getElementById('no-users-message');
-        const chatHeader = document.getElementById('chat-header');
-        const chatPartnerName = document.getElementById('chat-partner-name');
+
+        // Chat UI
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const chatWindow = document.getElementById('chat-window');
+        const chatListDiv = document.getElementById('chat-list');
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('message-input');
-        const sendMessageBtn = document.getElementById('send-message-btn');
-        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-        const sidebar = document.querySelector('.sidebar');
+        const sendBtn = document.getElementById('send-btn');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const newChatModal = document.getElementById('new-chat-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const userListContainer = document.getElementById('user-list-container');
 
-        // Loading Spinner
-        const loadingSpinner = document.getElementById('loading-spinner');
-
-        // Username Modal
-        const usernameModal = document.getElementById('username-modal');
-        const newUsernameInput = document.getElementById('new-username-input');
-        const saveUsernameBtn = document.getElementById('save-username-btn');
-        const usernameErrorMessage = document.getElementById('username-error-message');
-
-        // Custom Message Box Modal
-        const messageBoxModal = document.getElementById('message-box-modal');
-        const messageBoxText = document.getElementById('message-box-text');
-        const messageBoxOkBtn = document.getElementById('message-box-ok-btn');
-
-        // --- Authentication Mode State ---
-        let isLoginMode = true; // true for Login, false for Sign Up
 
         // --- Utility Functions ---
+        const showLoading = () => loadingOverlay.classList.remove('hidden');
+        const hideLoading = () => loadingOverlay.classList.add('hidden');
+        const getAvatar = (username) => `<div class="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">${username.charAt(0).toUpperCase()}</div>`;
+        const getChatId = (uid1, uid2) => [uid1, uid2].sort().join('_');
+        const formatTimestamp = (timestamp) => {
+            if (!timestamp) return '';
+            const date = timestamp.toDate();
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        };
+        
+        // --- Authentication Logic ---
 
-        /**
-         * Shows the global loading spinner.
-         */
-        function showLoading() {
-            loadingSpinner.classList.remove('hidden');
-        }
+        // Toggle between login and sign-up forms
+        showSignupLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginView.classList.add('hidden');
+            signupView.classList.remove('hidden');
+        });
 
-        /**
-         * Hides the global loading spinner.
-         */
-        function hideLoading() {
-            loadingSpinner.classList.add('hidden');
-        }
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupView.classList.add('hidden');
+            loginView.classList.remove('hidden');
+        });
 
-        /**
-         * Displays a custom message box to the user.
-         * @param {string} message - The message to display.
-         */
-        function showMessageBox(message) {
-            messageBoxText.textContent = message;
-            messageBoxModal.classList.remove('hidden');
-        }
-
-        /**
-         * Hides the custom message box.
-         */
-        function hideMessageBox() {
-            messageBoxModal.classList.add('hidden');
-        }
-
-        /**
-         * Generates a unique chat ID for two users by sorting their UIDs and joining them.
-         * This ensures the chat ID is consistent regardless of who initiates the chat.
-         * @param {string} user1Uid - UID of the first user.
-         * @param {string} user2Uid - UID of the second user.
-         * @returns {string} The unique chat ID.
-         */
-        function getChatId(user1Uid, user2Uid) {
-            return [user1Uid, user2Uid].sort().join('_');
-        }
-
-        // --- Firebase Initialization & User Profile Management ---
-
-        /**
-         * Initializes Firebase app, Firestore, and Authentication.
-         * Sets up the authentication state listener.
-         */
-        async function initializeFirebase() {
-            try {
-                showLoading(); // Show loading spinner
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Authenticate with custom token if provided by Canvas, otherwise sign in anonymously.
-                // This is crucial for the Canvas environment.
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Listen for changes in the user's authentication state.
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        // After successful authentication, check if the user has a username set.
-                        await checkAndSetUsername(user.uid);
-                    } else {
-                        // User is logged out or not authenticated.
-                        currentUserId = null;
-                        currentUsername = null;
-                        displayAuthSection(); // Show the login/signup screen
-                    }
-                    hideLoading(); // Hide loading spinner once auth state is processed
-                });
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                showMessageBox("Failed to initialize app. Please try again later. Check console for details.");
-                hideLoading();
+        // Sign Up
+        signupBtn.addEventListener('click', async () => {
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value.trim();
+            const username = document.getElementById('signup-username').value.trim();
+            const errorEl = document.getElementById('signup-error');
+            
+            if (!email || !password || !username) {
+                errorEl.textContent = "All fields are required.";
+                return;
             }
-        }
+            errorEl.textContent = '';
+            showLoading();
 
-        /**
-         * Checks if the current user has a username stored in Firestore.
-         * If not, prompts the user to set one.
-         * @param {string} uid - The UID of the current user.
-         */
-        async function checkAndSetUsername(uid) {
             try {
-                showLoading();
-                // Construct the base path for user artifacts.
-                // If appId is 'default-app-id' (meaning running locally outside Canvas),
-                // we omit 'artifacts/{appId}' to get an even number of segments.
-                const userArtifactsPath = appId === 'default-app-id' ? 'users' : `artifacts/${appId}/users`;
-
-                // Reference to the user's private profile document
-                const userDocRef = doc(db, `${userArtifactsPath}/${uid}/profile/data`, 'userProfile');
-                const userDocSnap = await getDoc(userDocRef);
-
-                if (userDocSnap.exists()) {
-                    // If profile exists, get the username
-                    currentUsername = userDocSnap.data().username;
-                    displayChatSection(); // Show the main chat interface
-                    fetchUsers(); // Start fetching other users for the chat list
-                } else {
-                    // If no profile, user needs to set a username
-                    showUsernameModal();
+                // Check if username is already taken
+                const usernameQuery = query(collection(db, "users"), where("username", "==", username));
+                const usernameSnapshot = await getDocs(usernameQuery);
+                if (!usernameSnapshot.empty) {
+                    throw new Error("Username is already taken.");
                 }
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Create user document in Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    username: username,
+                    email: user.email,
+                    createdAt: serverTimestamp()
+                });
+
             } catch (error) {
-                console.error("Error checking/setting username:", error);
-                showMessageBox("Failed to load user profile. Please try again. Check console for details.");
-                displayAuthSection(); // Fallback to auth if profile fails
+                errorEl.textContent = error.message;
             } finally {
                 hideLoading();
             }
-        }
+        });
 
-        /**
-         * Saves the chosen username to Firestore for the current user.
-         * Also adds the user to a public 'users' collection for discovery.
-         */
-        async function saveUsername() {
-            const username = newUsernameInput.value.trim();
-            if (!username) {
-                usernameErrorMessage.textContent = "Username cannot be empty.";
+        // Login
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            if (!email || !password) {
+                errorEl.textContent = "Please enter email and password.";
                 return;
             }
+            errorEl.textContent = '';
+            showLoading();
 
-            if (currentUserId) {
-                try {
-                    showLoading();
-                    // Construct the base path for public artifacts.
-                    const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
-
-                    // Check if username already exists in the public users list
-                    const usersRef = collection(db, `${publicArtifactsPath}/users`);
-                    const q = query(usersRef, where("username", "==", username));
-                    const querySnapshot = await getDocs(q);
-
-                    if (!querySnapshot.empty) {
-                        usernameErrorMessage.textContent = "This username is already taken. Please choose another.";
-                        return;
-                    }
-
-                    // Save username to the user's private profile
-                    const userProfileDocRef = doc(db, `${publicArtifactsPath.replace('public/data', `users/${currentUserId}/profile/data`)}`, 'userProfile'); // Adjusted path for private profile
-                    await setDoc(userProfileDocRef, { username: username, uid: currentUserId });
-
-                    // Add user to a public collection for other users to see
-                    const publicUserDocRef = doc(db, `${publicArtifactsPath}/users`, currentUserId);
-                    await setDoc(publicUserDocRef, { username: username, uid: currentUserId });
-
-                    currentUsername = username;
-                    usernameModal.classList.add('hidden'); // Hide the modal
-                    displayChatSection(); // Show the main chat
-                    fetchUsers(); // Refresh the user list
-                } catch (error) {
-                    console.error("Error saving username:", error);
-                    usernameErrorMessage.textContent = "Failed to save username. Please try again.";
-                } finally {
-                    hideLoading();
-                }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                errorEl.textContent = error.message;
+            } finally {
+                hideLoading();
             }
-        }
+        });
 
-        // --- UI Display State Management ---
+        // Logout
+        logoutBtn.addEventListener('click', async () => {
+            showLoading();
+            await signOut(auth);
+            // Auth state listener will handle UI changes
+            if(unsubscribeChatList) unsubscribeChatList();
+            if(unsubscribeMessages) unsubscribeMessages();
+            hideLoading();
+        });
 
-        /**
-         * Shows the authentication section and hides others.
-         * Resets the auth form to login mode.
-         */
-        function displayAuthSection() {
-            authSection.classList.remove('hidden');
-            chatSection.classList.add('hidden');
-            usernameModal.classList.add('hidden');
-            authErrorMessage.textContent = ''; // Clear previous errors
-            authEmailInput.value = '';
-            authPasswordInput.value = '';
-            setAuthMode('login'); // Reset to login mode
-        }
 
-        /**
-         * Shows the main chat section and hides others.
-         * Resets the chat area to a default state.
-         */
-        function displayChatSection() {
-            authSection.classList.add('hidden');
-            chatSection.classList.remove('hidden');
-            currentUserDisplay.textContent = currentUsername; // Display current user's username
+        // --- Main App Logic ---
 
-            // Reset chat area to initial state
-            chatPartnerName.textContent = "Select a chat to start messaging";
-            messagesContainer.innerHTML = '';
-            messageInput.disabled = true;
-            sendMessageBtn.disabled = true;
-            selectedChatPartner = null;
-            if (unsubscribeMessages) {
-                unsubscribeMessages(); // Stop listening to any previous chat
-            }
-        }
-
-        /**
-         * Shows the modal for setting a username.
-         */
-        function showUsernameModal() {
-            usernameModal.classList.remove('hidden');
-            newUsernameInput.value = ''; // Clear input field
-            usernameErrorMessage.textContent = ''; // Clear previous errors
-        }
-
-        /**
-         * Toggles the authentication form between Login and Sign Up mode.
-         * @param {string} mode - 'login' or 'signup'
-         */
-        function setAuthMode(mode) {
-            isLoginMode = (mode === 'login');
-            if (isLoginMode) {
-                authMainButton.textContent = 'Login';
-                authToggleText.textContent = "Don't have an account?";
-                authToggleLink.textContent = 'Sign Up';
-            } else {
-                authMainButton.textContent = 'Sign Up';
-                authToggleText.textContent = "Already have an account?";
-                authToggleLink.textContent = 'Login';
-            }
-            authErrorMessage.textContent = ''; // Clear error message on mode change
-        }
-
-        // --- User List and Chat Selection ---
-
-        /**
-         * Fetches and displays a real-time list of other registered users.
-         */
-        function fetchUsers() {
-            if (!currentUserId) return; // Ensure user is logged in
-
-            // Construct the base path for public artifacts.
-            const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
-
-            const usersRef = collection(db, `${publicArtifactsPath}/users`);
-            // Query to get all public user profiles, ordered by username
-            const q = query(usersRef, orderBy("username"));
-
-            // Set up a real-time listener for the users collection
-            onSnapshot(q, (snapshot) => {
-                userListDiv.innerHTML = ''; // Clear existing list items
-                let hasOtherUsers = false;
-                snapshot.forEach((doc) => {
-                    const userData = doc.data();
-                    // Don't show the current user in the list of chat partners
-                    if (userData.uid !== currentUserId) {
-                        hasOtherUsers = true;
-                        const userItem = document.createElement('div');
-                        userItem.classList.add('user-list-item', 'flex', 'items-center', 'space-x-3', 'rounded-lg');
-                        // Display user's initial in a circle
-                        userItem.innerHTML = `
-                            <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold text-lg">${userData.username.charAt(0).toUpperCase()}</div>
-                            <span class="font-medium text-gray-800">${userData.username}</span>
-                        `;
-                        userItem.dataset.uid = userData.uid; // Store UID for later use
-                        userItem.dataset.username = userData.username; // Store username
-                        // Add click listener to select this user for chat
-                        userItem.addEventListener('click', () => selectChatPartner(userData.uid, userData.username));
-                        userListDiv.appendChild(userItem);
-                    }
-                });
-
-                // Show/hide "No other users" message
-                if (!hasOtherUsers) {
-                    noUsersMessage.classList.remove('hidden');
+        // Listen for authentication state changes
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is logged in
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    currentUser = userDoc.data();
+                    setupChatUI();
+                    authSection.classList.add('hidden');
+                    chatSection.classList.remove('hidden');
                 } else {
-                    noUsersMessage.classList.add('hidden');
+                    // This case is unlikely if sign-up is correct, but good to have
+                    console.error("User document not found for logged-in user.");
+                    await signOut(auth);
+                }
+            } else {
+                // User is logged out
+                currentUser = null;
+                authSection.classList.remove('hidden');
+                chatSection.classList.add('hidden');
+            }
+        });
+
+        function setupChatUI() {
+            // Display current user's profile
+            const profileDiv = document.getElementById('current-user-profile');
+            profileDiv.innerHTML = `
+                ${getAvatar(currentUser.username)}
+                <span class="font-semibold text-gray-800">${currentUser.username}</span>
+            `;
+            // Listen for user's chats
+            listenForUserChats();
+        }
+        
+        function listenForUserChats() {
+            if (unsubscribeChatList) unsubscribeChatList();
+
+            const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+            
+            unsubscribeChatList = onSnapshot(q, async (snapshot) => {
+                if (snapshot.empty) {
+                    chatListDiv.innerHTML = '<div class="text-center p-8 text-gray-500">Your chats will appear here.</div>';
+                    return;
                 }
 
-                // Re-highlight the selected user if they are still in the list
-                if (selectedChatPartner) {
-                    const activeItem = userListDiv.querySelector(`[data-uid="${selectedChatPartner.uid}"]`);
-                    if (activeItem) {
-                        activeItem.classList.add('active');
+                chatListDiv.innerHTML = '';
+                for (const chatDoc of snapshot.docs) {
+                    const chatData = chatDoc.data();
+                    const partnerId = chatData.participants.find(p => p !== currentUser.uid);
+                    
+                    if(partnerId) {
+                        const userDoc = await getDoc(doc(db, "users", partnerId));
+                        if(userDoc.exists()){
+                            const partnerData = userDoc.data();
+                            const chatItem = document.createElement('div');
+                            chatItem.className = 'p-4 flex items-center space-x-4 hover:bg-gray-200 cursor-pointer border-b border-gray-100';
+                            chatItem.dataset.chatId = chatDoc.id;
+                            chatItem.dataset.partnerId = partnerId;
+                            chatItem.dataset.partnerName = partnerData.username;
+                            
+                            chatItem.innerHTML = `
+                                ${getAvatar(partnerData.username)}
+                                <div class="flex-grow">
+                                    <p class="font-semibold text-gray-800">${partnerData.username}</p>
+                                    <p class="text-sm text-gray-500 truncate">${chatData.lastMessage || 'No messages yet'}</p>
+                                </div>
+                                <span class="text-xs text-gray-400">${formatTimestamp(chatData.lastTimestamp)}</span>
+                            `;
+                            
+                            chatItem.addEventListener('click', () => openChat(chatDoc.id, partnerData));
+                            chatListDiv.appendChild(chatItem);
+                        }
                     }
                 }
-            }, (error) => {
-                console.error("Error fetching users:", error);
-                showMessageBox("Failed to load user list.");
             });
         }
+        
+        async function openChat(chatId, partner) {
+            welcomeScreen.classList.add('hidden');
+            chatWindow.classList.add('flex');
+            chatWindow.classList.remove('hidden');
 
-        /**
-         * Handles selecting a chat partner from the user list.
-         * @param {string} uid - The UID of the selected chat partner.
-         * @param {string} username - The username of the selected chat partner.
-         */
-        function selectChatPartner(uid, username) {
-            // If the same user is clicked again, do nothing
-            if (selectedChatPartner && selectedChatPartner.uid === uid) {
-                return;
-            }
+            chatWindow.dataset.currentChatId = chatId;
+            chatWindow.dataset.currentPartnerId = partner.uid;
 
-            // Remove 'active' class from previously selected item
-            const activeItem = userListDiv.querySelector('.user-list-item.active');
-            if (activeItem) {
-                activeItem.classList.remove('active');
-            }
-
-            // Add 'active' class to the newly selected item
-            const newItem = userListDiv.querySelector(`[data-uid="${uid}"]`);
-            if (newItem) {
-                newItem.classList.add('active');
-            }
-
-            selectedChatPartner = { uid, username };
-            chatPartnerName.textContent = selectedChatPartner.username; // Update chat header
-            messagesContainer.innerHTML = ''; // Clear messages from previous chat
-            messageInput.disabled = false; // Enable message input
-            sendMessageBtn.disabled = false; // Enable send button
-            messageInput.focus(); // Focus on input field
-
-            // Hide sidebar on mobile after selecting a chat partner
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('active');
-            }
-
-            listenForMessages(); // Start listening for messages in the new chat
+            // Set chat header
+            document.getElementById('chat-header').innerHTML = `
+                ${getAvatar(partner.username)}
+                <span class="font-semibold text-gray-800">${partner.username}</span>
+            `;
+            
+            // Listen for messages
+            listenForMessages(chatId);
         }
 
-        // --- Messaging Logic ---
+        function listenForMessages(chatId) {
+            if(unsubscribeMessages) unsubscribeMessages();
 
-        /**
-         * Sets up a real-time listener for messages in the currently selected chat.
-         */
-        function listenForMessages() {
-            if (unsubscribeMessages) {
-                unsubscribeMessages(); // Unsubscribe from any previously active listener
-            }
-
-            if (!currentUserId || !selectedChatPartner) return;
-
-            // Construct the base path for public artifacts.
-            const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
-
-            // Get the unique chat ID for the current pair of users
-            const chatId = getChatId(currentUserId, selectedChatPartner.uid);
-            // Reference to the messages subcollection for this chat
-            const messagesRef = collection(db, `${publicArtifactsPath}/chats/${chatId}/messages`);
-            // Query messages, ordered by timestamp
+            const messagesRef = collection(db, "chats", chatId, "messages");
             const q = query(messagesRef, orderBy("timestamp"));
 
-            // Set up a real-time listener
             unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                messagesContainer.innerHTML = ''; // Clear messages to re-render all
-                snapshot.forEach((doc) => {
-                    const message = doc.data();
-                    displayMessage(message); // Display each message
+                messagesContainer.innerHTML = '';
+                snapshot.forEach(doc => {
+                    displayMessage(doc.data());
                 });
-                // Scroll to the bottom of the messages container to show the latest message
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, (error) => {
-                console.error("Error listening for messages:", error);
-                showMessageBox("Failed to load messages.");
             });
         }
 
-        /**
-         * Sends a message to the currently selected chat partner.
-         */
-        async function sendMessage() {
-            const messageText = messageInput.value.trim();
-            // Ensure message is not empty and a chat partner is selected
-            if (!messageText || !currentUserId || !selectedChatPartner) return;
-
-            // Construct the base path for public artifacts.
-            const publicArtifactsPath = appId === 'default-app-id' ? 'public/data' : `artifacts/${appId}/public/data`;
-
-            const chatId = getChatId(currentUserId, selectedChatPartner.uid);
-            const messagesRef = collection(db, `${publicArtifactsPath}/chats/${chatId}/messages`);
-
-            try {
-                showLoading();
-                await addDoc(messagesRef, {
-                    senderId: currentUserId,
-                    senderUsername: currentUsername,
-                    receiverId: selectedChatPartner.uid,
-                    message: messageText,
-                    timestamp: new Date(), // Use current timestamp
-                });
-                messageInput.value = ''; // Clear the input field after sending
-            } catch (error) {
-                console.error("Error sending message:", error);
-                showMessageBox("Failed to send message. Please try again.");
-            } finally {
-                hideLoading();
-            }
-        }
-
-        /**
-         * Displays a single message in the messages container.
-         * @param {object} message - The message object from Firestore.
-         */
         function displayMessage(message) {
-            const messageBubble = document.createElement('div');
-            messageBubble.classList.add('message-bubble', 'relative', 'group');
+            const isSent = message.senderId === currentUser.uid;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-end gap-2 ${isSent ? 'justify-end' : 'justify-start'}`;
+            
+            const bubbleClass = isSent ? 'bg-teal-500 text-white' : 'bg-white text-gray-800';
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-xs md:max-w-md p-3 rounded-2xl ${bubbleClass} shadow-sm">
+                    <p>${message.text}</p>
+                    <p class="text-xs mt-1 text-right ${isSent ? 'text-teal-100' : 'text-gray-400'}">
+                        ${formatTimestamp(message.timestamp)}
+                    </p>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+        }
+        
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
 
-            const isSentByCurrentUser = message.senderId === currentUserId;
-            if (isSentByCurrentUser) {
-                messageBubble.classList.add('message-sent');
-            } else {
-                messageBubble.classList.add('message-received');
-                // Display sender's username for received messages
-                const senderNameSpan = document.createElement('span');
-                senderNameSpan.classList.add('text-xs', 'font-semibold', 'text-gray-600', 'mb-1', 'block');
-                senderNameSpan.textContent = message.senderUsername;
-                messageBubble.appendChild(senderNameSpan);
-            }
+            const chatId = chatWindow.dataset.currentChatId;
+            if (!chatId) return;
 
-            const messageTextDiv = document.createElement('div');
-            messageTextDiv.textContent = message.message;
-            messageTextDiv.classList.add('text-gray-900');
-            messageBubble.appendChild(messageTextDiv);
+            messageInput.value = '';
 
-            const timestampSpan = document.createElement('span');
-            timestampSpan.classList.add('message-time');
-            // Convert Firestore Timestamp to JavaScript Date object if necessary
-            const date = message.timestamp.toDate ? message.timestamp.toDate() : new Date(message.timestamp);
-            timestampSpan.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            messageBubble.appendChild(timestampSpan);
+            // Add message to subcollection
+            const messagesRef = collection(db, "chats", chatId, "messages");
+            await addDoc(messagesRef, {
+                senderId: currentUser.uid,
+                text: text,
+                timestamp: serverTimestamp()
+            });
 
-            messagesContainer.appendChild(messageBubble);
+            // Update last message on the chat document
+            const chatRef = doc(db, "chats", chatId);
+            await updateDoc(chatRef, {
+                lastMessage: text,
+                lastTimestamp: serverTimestamp()
+            });
         }
 
-        // --- Event Listeners ---
-
-        // Main auth button click handler (Login or Sign Up)
-        authMainButton.addEventListener('click', async () => {
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-            if (!email || !password) {
-                authErrorMessage.textContent = "Please enter email and password.";
-                return;
-            }
-
-            try {
-                showLoading();
-                if (isLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-                // onAuthStateChanged listener will handle the UI update after successful auth
-            } catch (error) {
-                console.error("Authentication error:", error);
-                authErrorMessage.textContent = "Authentication failed: " + error.message;
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Toggle between Login and Sign Up mode
-        authToggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            setAuthMode(isLoginMode ? 'signup' : 'login');
-        });
-
-        // Logout button click handler
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                showLoading();
-                await signOut(auth);
-                // onAuthStateChanged listener will handle the UI update after successful logout
-            } catch (error) {
-                console.error("Logout error:", error);
-                showMessageBox("Failed to log out.");
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Save Username button click handler
-        saveUsernameBtn.addEventListener('click', saveUsername);
-        // Allow pressing Enter in username input to save
-        newUsernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                saveUsername();
-            }
-        });
-
-        // Send Message button click handler
-        sendMessageBtn.addEventListener('click', sendMessage);
-        // Allow pressing Enter in message input to send
+        sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !sendMessageBtn.disabled) {
-                sendMessage();
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        // --- New Chat Modal Logic ---
+        newChatBtn.addEventListener('click', async () => {
+            showLoading();
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("uid", "!=", currentUser.uid));
+            const querySnapshot = await getDocs(q);
+            
+            userListContainer.innerHTML = '';
+            if (querySnapshot.empty) {
+                userListContainer.innerHTML = '<p class="text-gray-500 text-center">No other users found.</p>';
+            } else {
+                 querySnapshot.forEach(userDoc => {
+                    const userData = userDoc.data();
+                    const userItem = document.createElement('div');
+                    userItem.className = 'p-3 flex items-center space-x-3 hover:bg-gray-100 cursor-pointer rounded-lg';
+                    userItem.innerHTML = `
+                        ${getAvatar(userData.username)}
+                        <span class="font-medium">${userData.username}</span>
+                    `;
+                    userItem.addEventListener('click', () => startNewChat(userData));
+                    userListContainer.appendChild(userItem);
+                });
             }
+            
+            newChatModal.classList.remove('hidden');
+            hideLoading();
         });
 
-        // Toggle sidebar button click handler (for mobile responsiveness)
-        toggleSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
+        closeModalBtn.addEventListener('click', () => {
+            newChatModal.classList.add('hidden');
         });
 
-        // OK button for custom message box
-        messageBoxOkBtn.addEventListener('click', hideMessageBox);
+        async function startNewChat(partner) {
+            newChatModal.classList.add('hidden');
+            const chatId = getChatId(currentUser.uid, partner.uid);
+            const chatRef = doc(db, "chats", chatId);
 
-        // --- Initial App Load ---
-        // Initialize Firebase when the window finishes loading
-        window.onload = initializeFirebase;
+            const chatDoc = await getDoc(chatRef);
+            if (!chatDoc.exists()) {
+                // Chat doesn't exist, create it
+                await setDoc(chatRef, {
+                    participants: [currentUser.uid, partner.uid],
+                    createdAt: serverTimestamp()
+                });
+            }
+            
+            openChat(chatId, partner);
+        }
 
-        /*
-        * IMPORTANT FIRESTORE SECURITY RULES:
-        *
-        * For this application to work securely and correctly, you MUST set up Firestore Security Rules in your Firebase project.
-        * These rules control who can read and write data in your database.
-        *
-        * Go to your Firebase Console -> Firestore Database -> Rules tab.
-        * Replace the existing rules with something similar to this.
-        * Make sure to replace `appId` with the actual value if you hardcode it,
-        * otherwise, ensure your `__app_id` variable is correctly passed.
-        *
-        * rules_version = '2';
-        * service cloud.firestore {
-        * match /databases/{database}/documents {
-        *
-        * // Public user profiles:
-        * // This collection stores usernames and UIDs for all registered users,
-        * // allowing users to discover and chat with each other.
-        * match /artifacts/{appId}/public/data/users/{userId} {
-        * // Any authenticated user can read the list of public user profiles.
-        * allow read: if request.auth != null;
-        * // A user can only create or update their own public profile.
-        * allow create: if request.auth != null && request.auth.uid == userId;
-        * allow update: if request.auth != null && request.auth.uid == userId;
-        * // Public profiles cannot be deleted by users through the client.
-        * allow delete: if false;
-        * }
-        *
-        * // Private user profile data:
-        * // This stores the username linked to the user's UID.
-        * match /artifacts/{appId}/users/{userId}/profile/data/userProfile {
-        * // Only the owner of the profile can read or write to it.
-        * allow read, write: if request.auth != null && request.auth.uid == userId;
-        * }
-        *
-        * // Chat messages:
-        * // Messages are stored in subcollections within a 'chats' collection.
-        * // The 'chatId' is generated by sorting the UIDs of the two participants (e.g., "uid1_uid2").
-        * match /artifacts/{appId}/public/data/chats/{chatId}/messages/{messageId} {
-        * // Allow read access if the authenticated user's UID is part of the chatId.
-        * // This ensures only participants of a chat can read its messages.
-        * allow read: if request.auth != null && (chatId.matches(request.auth.uid + "_.*") || chatId.matches(".*_" + request.auth.uid));
-        * // Allow create access if the authenticated user's UID is part of the chatId.
-        * // This ensures only participants can add messages to their chat.
-        * allow create: if request.auth != null && (chatId.matches(request.auth.uid + "_.*") || chatId.matches(".*_" + request.auth.uid));
-        * // Messages cannot be updated or deleted after being sent.
-        * allow update, delete: if false;
-        * }
-        * }
-        * }
-        */
     </script>
 </body>
 </html>
