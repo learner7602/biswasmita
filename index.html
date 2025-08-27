@@ -1,547 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Chat - Modern Messenger</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        /* Custom scrollbar for a cleaner look */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f0f2f5; /* Lighter background for track */
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #aab8c2; /* Softer thumb color */
-            border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #8899a6; /* Darker on hover */
-        }
-        /* Spinner Animation */
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-left-color: #ffffff;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        /* Gradient for sender's messages */
-        .gradient-bubble {
-            background-image: linear-gradient(to right bottom, #10b981, #06b6d4); /* Tailwind green-400 to cyan-400 */
-        }
-        .gradient-bubble-dark {
-            background-image: linear-gradient(to right bottom, #059669, #0891b2); /* Darker green to cyan */
-        }
-        /* Responsive chat window */
-        @media (max-width: 768px) {
-            #chat-section {
-                flex-direction: column;
-            }
-            #chat-list-aside {
-                width: 100%;
-                height: 40%; /* Adjust as needed for mobile */
-                border-right: none;
-                border-bottom: 1px solid #e2e8f0;
-            }
-            #main-chat-area {
-                width: 100%;
-                height: 60%; /* Adjust as needed for mobile */
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Manage Class Links & Resources</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">Admin Panel</h1>
 
-    <div id="app-container" class="w-full h-screen flex justify-center items-center">
-
-        <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden transition-opacity duration-300 ease-in-out">
-            <div class="spinner"></div>
-        </div>
-
-        <div id="auth-section" class="w-full h-full flex items-center justify-center bg-gray-100 transition-all duration-500 ease-in-out">
-            <div class="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-300">
-                <div id="login-view">
-                    <h2 class="text-4xl font-extrabold text-center text-gray-900 mb-3">Welcome to Dr. Chat</h2>
-                    <p class="text-center text-gray-600 mb-8">Sign in to your account.</p>
-                    <div class="space-y-5">
-                        <input type="email" id="login-email" placeholder="Email Address" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-3 focus:ring-teal-400 focus:border-transparent transition-all duration-200">
-                        <input type="password" id="login-password" placeholder="Password" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-3 focus:ring-teal-400 focus:border-transparent transition-all duration-200">
-                    </div>
-                    <p id="login-error" class="text-red-500 text-sm mt-4 text-center h-4 font-medium"></p>
-                    <button id="login-btn" class="w-full mt-6 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold py-3 rounded-lg shadow-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 transform hover:-translate-y-1">Login</button>
-                    <p class="text-center text-gray-600 mt-8 text-sm">
-                        Don't have an account? <a href="#" id="show-signup-link" class="font-semibold text-teal-600 hover:text-teal-700 underline transition-colors">Sign Up Here</a>
-                    </p>
-                </div>
-                <div id="signup-view" class="hidden">
-                    <h2 class="text-4xl font-extrabold text-center text-gray-900 mb-3">Join Dr. Chat Today!</h2>
-                    <p class="text-center text-gray-600 mb-8">Create your new account.</p>
-                    <div class="space-y-5">
-                        <input type="text" id="signup-username" placeholder="Username" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-3 focus:ring-teal-400 focus:border-transparent transition-all duration-200">
-                        <input type="email" id="signup-email" placeholder="Email Address" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-3 focus:ring-teal-400 focus:border-transparent transition-all duration-200">
-                        <input type="password" id="signup-password" placeholder="Password" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-3 focus:ring-teal-400 focus:border-transparent transition-all duration-200">
-                    </div>
-                     <p id="signup-error" class="text-red-500 text-sm mt-4 text-center h-4 font-medium"></p>
-                    <button id="signup-btn" class="w-full mt-6 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold py-3 rounded-lg shadow-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 transform hover:-translate-y-1">Sign Up</button>
-                    <p class="text-center text-gray-600 mt-8 text-sm">
-                        Already have an account? <a href="#" id="show-login-link" class="font-semibold text-teal-600 hover:text-teal-700 underline transition-colors">Login Here</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div id="chat-section" class="w-full h-full flex hidden bg-white shadow-lg md:rounded-lg md:max-w-6xl md:h-[90vh] overflow-hidden transition-all duration-500 ease-in-out">
-            <aside id="chat-list-aside" class="w-full md:w-1/3 lg:w-1/4 h-full bg-gray-50 border-r border-gray-200 flex flex-col">
-                <header class="p-5 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm">
-                    <div id="current-user-profile" class="flex items-center space-x-3">
-                        </div>
-                    <button id="logout-btn" title="Logout" class="text-gray-500 hover:text-red-600 transition-colors transform hover:scale-110">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    </button>
-                </header>
-
-                <div class="p-4 bg-gray-100 border-b border-gray-200">
-                     <button id="new-chat-btn" class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>New Chat</span>
-                    </button>
-                </div>
-
-                <div id="chat-list" class="flex-grow overflow-y-auto custom-scrollbar bg-white">
-                    <div id="no-chats-message" class="text-center p-8 text-gray-500 text-sm italic">No active chats. Start a new conversation!</div>
-                </div>
-            </aside>
-
-            <main id="main-chat-area" class="w-full md:w-2/3 lg:w-3/4 h-full flex flex-col bg-gray-100">
-                <div id="welcome-screen" class="flex-grow flex flex-col items-center justify-center text-center text-gray-400">
-                    <svg class="w-32 h-32 mb-6 text-gray-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.08-3.083A6.96 6.96 0 011.999 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.932 11.672A5.485 5.485 0 0010 13c2.757 0 5-1.79 5-4s-2.243-4-5-4-5 1.79-5 4c0 .647.161 1.26.44 1.805L4 14.5l.932-2.828z" clip-rule="evenodd"></path></svg>
-                    <h2 class="text-3xl font-bold text-gray-700 mb-2">Welcome to Dr. Chat</h2>
-                    <p class="text-lg">Select a chat from the left or start a new conversation.</p>
-                </div>
-
-                <div id="chat-window" class="flex-grow flex-col hidden">
-                    <header id="chat-header" class="p-5 bg-white border-b border-gray-200 flex items-center space-x-4 shadow-sm">
-                        </header>
-                    <div id="messages-container" class="flex-grow p-4 md:p-6 overflow-y-auto custom-scrollbar space-y-4">
-                        </div>
-                    <footer class="p-4 bg-white border-t border-gray-200 shadow-sm">
-                        <div class="flex items-center space-x-3">
-                            <input type="text" id="message-input" placeholder="Type your message here..." class="flex-grow w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-500">
-                            <button id="send-btn" class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-full p-3 shadow-md hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 transform hover:scale-105">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                            </button>
-                        </div>
-                    </footer>
-                </div>
-            </main>
-        </div>
-        
-        <div id="new-chat-modal" class="fixed inset-0 z-40 bg-black bg-opacity-60 flex items-center justify-center hidden transition-opacity duration-300 ease-in-out">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm transform scale-95 opacity-0 transition-all duration-300 ease-out">
-                <div class="p-5 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-xl text-gray-800">Start a New Chat</h3>
-                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl transition-colors">&times;</button>
-                </div>
-                <div id="user-list-container" class="p-4 max-h-80 overflow-y-auto custom-scrollbar">
-                    </div>
-            </div>
-        </div>
-
+    <!-- Login Form -->
+    <div id="loginSection">
+      <input type="email" id="email" placeholder="Teacher Email" class="w-full border p-2 rounded mb-4">
+      <input type="password" id="password" placeholder="Password" class="w-full border p-2 rounded mb-4">
+      <button id="loginBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Login</button>
+      <p id="loginMsg" class="mt-3 text-center text-sm text-red-500"></p>
     </div>
 
-    <script type="module">
-        // --- Firebase SDK Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, addDoc, orderBy, getDocs, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Admin Controls -->
+    <div id="adminSection" class="hidden">
+      <p class="mb-4 text-center text-green-600 font-semibold">✅ Logged in as <span id="userEmail"></span></p>
 
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyB-9OmjdMfSWP0C1Gk-4Ls9afe-5ei6lkg",
-            authDomain: "drchat-d72d9.firebaseapp.com",
-            projectId: "drchat-d72d9",
-            storageBucket: "drchat-d72d9.firebasestorage.app",
-            messagingSenderId: "687271085882",
-            appId: "1:687271085882:web:1b93bbd798bf8cb8047203"
-        };
+      <!-- Class Selection -->
+      <label class="block mb-2 font-semibold">Select Class:</label>
+      <select id="classSelect" class="w-full border p-2 rounded mb-4">
+        <option value="Class-V">Class V</option>
+        <option value="Class-VI">Class VI</option>
+        <option value="Class-VII">Class VII</option>
+        <option value="Class-VIII">Class VIII</option>
+        <option value="Class-IX">Class IX</option>
+        <option value="Class-X">Class X</option>
+        <option value="Class-XI">Class XI</option>
+        <option value="Class-XII">Class XII</option>
+      </select>
 
-        // --- Initialize Firebase ---
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+      <!-- Class Link Input -->
+      <label class="block mb-2 font-semibold">Class Link (Zoom/Meet):</label>
+      <input type="text" id="classLink" placeholder="Paste class link here" class="w-full border p-2 rounded mb-4">
 
-        // --- Global State ---
-        let currentUser = null;
-        let unsubscribeChatList = null;
-        let unsubscribeMessages = null;
+      <!-- Save Class Link -->
+      <button id="saveBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 mb-6">Save Link</button>
 
-        // --- UI Elements ---
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const authSection = document.getElementById('auth-section');
-        const chatSection = document.getElementById('chat-section');
-        const loginView = document.getElementById('login-view');
-        const signupView = document.getElementById('signup-view');
-        
-        // Auth UI
-        const loginBtn = document.getElementById('login-btn');
-        const signupBtn = document.getElementById('signup-btn');
-        const showSignupLink = document.getElementById('show-signup-link');
-        const showLoginLink = document.getElementById('show-login-link');
-        const logoutBtn = document.getElementById('logout-btn');
+      <!-- Resources -->
+      <h2 class="text-xl font-semibold mb-2">Add Resource</h2>
+      <input type="text" id="resourceTitle" placeholder="Resource Title (e.g. Chapter 1 Notes)" class="w-full border p-2 rounded mb-2">
+      <input type="text" id="resourceLink" placeholder="Paste Resource Link (PDF/Drive/Image)" class="w-full border p-2 rounded mb-4">
+      <button id="addResourceBtn" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Add Resource</button>
 
-        // Chat UI
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const chatWindow = document.getElementById('chat-window');
-        const chatListDiv = document.getElementById('chat-list');
-        const messagesContainer = document.getElementById('messages-container');
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
-        const newChatBtn = document.getElementById('new-chat-btn');
-        const newChatModal = document.getElementById('new-chat-modal');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const userListContainer = document.getElementById('user-list-container');
+      <p id="statusMsg" class="mt-4 text-center text-sm"></p>
 
+      <button id="logoutBtn" class="w-full mt-6 bg-red-600 text-white py-2 rounded hover:bg-red-700">Logout</button>
+    </div>
+  </div>
 
-        // --- Utility Functions ---
-        const showLoading = () => {
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.classList.add('opacity-100');
-        };
-        const hideLoading = () => {
-            loadingOverlay.classList.remove('opacity-100');
-            loadingOverlay.classList.add('hidden');
-        };
-        const getAvatar = (username) => `<div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-md">${username.charAt(0).toUpperCase()}</div>`;
-        const getChatId = (uid1, uid2) => [uid1, uid2].sort().join('_');
-        const formatTimestamp = (timestamp) => {
-            if (!timestamp) return '';
-            const date = timestamp.toDate();
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        };
-        
-        // --- Authentication Logic ---
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-        // Toggle between login and sign-up forms
-        showSignupLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginView.classList.add('hidden');
-            signupView.classList.remove('hidden');
-        });
+  <script>
+    // ✅ Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyApjKA34mwvz_gWH9V0RY4wHbmMEP6oqRg",
+      authDomain: "educonnectapp-ae08d.firebaseapp.com",
+      projectId: "educonnectapp-ae08d",
+      storageBucket: "educonnectapp-ae08d.firebasestorage.app",
+      messagingSenderId: "10974354104",
+      appId: "1:10974354104:web:228ca789dfb241f43ff24d",
+      measurementId: "G-XMDY71K3ZR"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            signupView.classList.add('hidden');
-            loginView.classList.remove('hidden');
-        });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // Sign Up
-        signupBtn.addEventListener('click', async () => {
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value.trim();
-            const username = document.getElementById('signup-username').value.trim();
-            const errorEl = document.getElementById('signup-error');
-            
-            if (!email || !password || !username) {
-                errorEl.textContent = "All fields are required.";
-                return;
-            }
-            errorEl.textContent = '';
-            showLoading();
+    // ✅ Whitelisted teacher emails
+    const allowedTeachers = ["learner.studenthub@gmail.com", "teacher2@gmail.com"];
 
-            try {
-                // Check if username is already taken
-                const usernameQuery = query(collection(db, "users"), where("username", "==", username));
-                const usernameSnapshot = await getDocs(usernameQuery);
-                if (!usernameSnapshot.empty) {
-                    throw new Error("Username is already taken.");
-                }
+    // Elements
+    const loginSection = document.getElementById("loginSection");
+    const adminSection = document.getElementById("adminSection");
+    const loginMsg = document.getElementById("loginMsg");
+    const userEmail = document.getElementById("userEmail");
 
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+    // Login
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        loginMsg.innerText = "";
+      } catch (err) {
+        loginMsg.innerText = "❌ " + err.message;
+      }
+    });
 
-                // Create user document in Firestore
-                await setDoc(doc(db, "users", user.uid), {
-                    uid: user.uid,
-                    username: username,
-                    email: user.email,
-                    createdAt: serverTimestamp()
-                });
+    // Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut();
+    });
 
-            } catch (error) {
-                errorEl.textContent = error.message;
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Login
-        loginBtn.addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-
-            if (!email || !password) {
-                errorEl.textContent = "Please enter email and password.";
-                return;
-            }
-            errorEl.textContent = '';
-            showLoading();
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                errorEl.textContent = error.message;
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Logout
-        logoutBtn.addEventListener('click', async () => {
-            showLoading();
-            await signOut(auth);
-            // Auth state listener will handle UI changes
-            if(unsubscribeChatList) unsubscribeChatList();
-            if(unsubscribeMessages) unsubscribeMessages();
-            hideLoading();
-        });
-
-
-        // --- Main App Logic ---
-
-        // Listen for authentication state changes
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is logged in
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    currentUser = userDoc.data();
-                    setupChatUI();
-                    authSection.classList.add('hidden');
-                    chatSection.classList.remove('hidden');
-                } else {
-                    // This case is unlikely if sign-up is correct, but good to have
-                    console.error("User document not found for logged-in user.");
-                    await signOut(auth);
-                }
-            } else {
-                // User is logged out
-                currentUser = null;
-                authSection.classList.remove('hidden');
-                chatSection.classList.add('hidden');
-            }
-        });
-
-        function setupChatUI() {
-            // Display current user's profile
-            const profileDiv = document.getElementById('current-user-profile');
-            profileDiv.innerHTML = `
-                ${getAvatar(currentUser.username)}
-                <span class="font-semibold text-gray-800 text-lg">${currentUser.username}</span>
-            `;
-            // Listen for user's chats
-            listenForUserChats();
+    // Auth State
+    auth.onAuthStateChanged((user) => {
+      if (user && allowedTeachers.includes(user.email)) {
+        loginSection.classList.add("hidden");
+        adminSection.classList.remove("hidden");
+        userEmail.innerText = user.email;
+      } else {
+        if (user) {
+          alert("❌ You are not authorized to access the Admin Panel.");
+          auth.signOut();
         }
-        
-        function listenForUserChats() {
-            if (unsubscribeChatList) unsubscribeChatList();
+        loginSection.classList.remove("hidden");
+        adminSection.classList.add("hidden");
+      }
+    });
 
-            const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
-            
-            unsubscribeChatList = onSnapshot(q, async (snapshot) => {
-                if (snapshot.empty) {
-                    chatListDiv.innerHTML = '<div class="text-center p-8 text-gray-500 text-sm italic">No active chats. Start a new conversation!</div>';
-                    return;
-                }
+    // Save Live Class Link
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const classId = document.getElementById("classSelect").value;
+      const link = document.getElementById("classLink").value;
+      if (!link) {
+        document.getElementById("statusMsg").innerText = "⚠️ Please enter a class link.";
+        return;
+      }
+      try {
+        await db.collection(classId).doc("liveClass").set({ link });
+        document.getElementById("statusMsg").innerText = "✅ Link saved successfully!";
+      } catch (error) {
+        console.error(error);
+        document.getElementById("statusMsg").innerText = "❌ Error saving link.";
+      }
+    });
 
-                chatListDiv.innerHTML = '';
-                for (const chatDoc of snapshot.docs) {
-                    const chatData = chatDoc.data();
-                    const partnerId = chatData.participants.find(p => p !== currentUser.uid);
-                    
-                    if(partnerId) {
-                        const userDoc = await getDoc(doc(db, "users", partnerId));
-                        if(userDoc.exists()){
-                            const partnerData = userDoc.data();
-                            const chatItem = document.createElement('div');
-                            chatItem.className = 'p-4 flex items-center space-x-4 hover:bg-gray-100 cursor-pointer border-b border-gray-100 transition-colors duration-150';
-                            chatItem.dataset.chatId = chatDoc.id;
-                            chatItem.dataset.partnerId = partnerId;
-                            chatItem.dataset.partnerName = partnerData.username;
-                            
-                            chatItem.innerHTML = `
-                                ${getAvatar(partnerData.username)}
-                                <div class="flex-grow">
-                                    <p class="font-semibold text-gray-800">${partnerData.username}</p>
-                                    <p class="text-sm text-gray-500 truncate">${chatData.lastMessage || 'No messages yet'}</p>
-                                </div>
-                                <span class="text-xs text-gray-400">${formatTimestamp(chatData.lastTimestamp)}</span>
-                            `;
-                            
-                            chatItem.addEventListener('click', () => openChat(chatDoc.id, partnerData));
-                            chatListDiv.appendChild(chatItem);
-                        }
-                    }
-                }
-            });
-        }
-        
-        async function openChat(chatId, partner) {
-            welcomeScreen.classList.add('hidden');
-            chatWindow.classList.add('flex');
-            chatWindow.classList.remove('hidden');
-
-            chatWindow.dataset.currentChatId = chatId;
-            chatWindow.dataset.currentPartnerId = partner.uid;
-
-            // Set chat header
-            document.getElementById('chat-header').innerHTML = `
-                ${getAvatar(partner.username)}
-                <span class="font-semibold text-gray-800 text-lg">${partner.username}</span>
-            `;
-            
-            // Listen for messages
-            listenForMessages(chatId);
-        }
-
-        function listenForMessages(chatId) {
-            if(unsubscribeMessages) unsubscribeMessages();
-
-            const messagesRef = collection(db, "chats", chatId, "messages");
-            const q = query(messagesRef, orderBy("timestamp"));
-
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                messagesContainer.innerHTML = '';
-                snapshot.forEach(doc => {
-                    displayMessage(doc.data());
-                });
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            });
-        }
-
-        function displayMessage(message) {
-            const isSent = message.senderId === currentUser.uid;
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flex items-end gap-2 ${isSent ? 'justify-end' : 'justify-start'}`;
-            
-            const bubbleClass = isSent ? 'gradient-bubble text-white' : 'bg-white text-gray-800 border border-gray-200';
-            
-            messageDiv.innerHTML = `
-                <div class="max-w-xs md:max-w-md p-3 rounded-xl ${bubbleClass} shadow-md">
-                    <p>${message.text}</p>
-                    <p class="text-xs mt-1 text-right ${isSent ? 'text-teal-100 opacity-80' : 'text-gray-500 opacity-80'}">
-                        ${formatTimestamp(message.timestamp)}
-                    </p>
-                </div>
-            `;
-            messagesContainer.appendChild(messageDiv);
-        }
-        
-        async function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text) return;
-
-            const chatId = chatWindow.dataset.currentChatId;
-            if (!chatId) return;
-
-            messageInput.value = '';
-
-            // Add message to subcollection
-            const messagesRef = collection(db, "chats", chatId, "messages");
-            await addDoc(messagesRef, {
-                senderId: currentUser.uid,
-                text: text,
-                timestamp: serverTimestamp()
-            });
-
-            // Update last message on the chat document
-            const chatRef = doc(db, "chats", chatId);
-            await updateDoc(chatRef, {
-                lastMessage: text,
-                lastTimestamp: serverTimestamp()
-            });
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-        
-        // --- New Chat Modal Logic ---
-        newChatBtn.addEventListener('click', async () => {
-            showLoading();
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("uid", "!=", currentUser.uid));
-            const querySnapshot = await getDocs(q);
-            
-            userListContainer.innerHTML = '';
-            if (querySnapshot.empty) {
-                userListContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No other users found.</p>';
-            } else {
-                 querySnapshot.forEach(userDoc => {
-                    const userData = userDoc.data();
-                    const userItem = document.createElement('div');
-                    userItem.className = 'p-3 flex items-center space-x-3 hover:bg-blue-50 cursor-pointer rounded-lg transition-colors duration-150';
-                    userItem.innerHTML = `
-                        ${getAvatar(userData.username)}
-                        <span class="font-medium text-gray-800">${userData.username}</span>
-                    `;
-                    userItem.addEventListener('click', () => startNewChat(userData));
-                    userListContainer.appendChild(userItem);
-                });
-            }
-            
-            newChatModal.classList.remove('hidden');
-            // Add a slight delay to allow hidden class removal before scale/opacity transition
-            setTimeout(() => {
-                newChatModal.querySelector('.bg-white').classList.remove('opacity-0', 'scale-95');
-                newChatModal.querySelector('.bg-white').classList.add('opacity-100', 'scale-100');
-            }, 50);
-            hideLoading();
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            newChatModal.querySelector('.bg-white').classList.remove('opacity-100', 'scale-100');
-            newChatModal.querySelector('.bg-white').classList.add('opacity-0', 'scale-95');
-            setTimeout(() => {
-                newChatModal.classList.add('hidden');
-            }, 300); // Match CSS transition duration
-        });
-
-        async function startNewChat(partner) {
-            newChatModal.querySelector('.bg-white').classList.remove('opacity-100', 'scale-100');
-            newChatModal.querySelector('.bg-white').classList.add('opacity-0', 'scale-95');
-            setTimeout(async () => {
-                newChatModal.classList.add('hidden');
-                const chatId = getChatId(currentUser.uid, partner.uid);
-                const chatRef = doc(db, "chats", chatId);
-
-                const chatDoc = await getDoc(chatRef);
-                if (!chatDoc.exists()) {
-                    // Chat doesn't exist, create it
-                    await setDoc(chatRef, {
-                        participants: [currentUser.uid, partner.uid],
-                        createdAt: serverTimestamp()
-                    });
-                }
-                
-                openChat(chatId, partner);
-            }, 300); // Match CSS transition duration
-        }
-
-    </script>
+    // Add Resource
+    document.getElementById("addResourceBtn").addEventListener("click", async () => {
+      const classId = document.getElementById("classSelect").value;
+      const title = document.getElementById("resourceTitle").value;
+      const link = document.getElementById("resourceLink").value;
+      if (!title || !link) {
+        document.getElementById("statusMsg").innerText = "⚠️ Please enter both title and link.";
+        return;
+      }
+      try {
+        await db.collection(classId).doc("resources").collection("items").add({ title, link });
+        document.getElementById("statusMsg").innerText = "✅ Resource added successfully!";
+        document.getElementById("resourceTitle").value = "";
+        document.getElementById("resourceLink").value = "";
+      } catch (error) {
+        console.error(error);
+        document.getElementById("statusMsg").innerText = "❌ Error saving resource.";
+      }
+    });
+  </script>
 </body>
 </html>
