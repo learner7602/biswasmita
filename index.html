@@ -5,10 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel - Manage Class Links & Resources</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    .sign-out-btn {
+      background-color: #e53e3e;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      transition: background-color 0.2s ease-in-out;
+    }
+    .sign-out-btn:hover {
+      background-color: #c53030;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
   <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-bold mb-6 text-center">Admin Panel</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Admin Panel</h1>
+      <button id="signOutBtn" class="sign-out-btn hidden">Sign Out</button>
+    </div>
 
     <!-- Login Form -->
     <div id="loginSection">
@@ -78,12 +98,15 @@
     const saveLinkBtn = document.getElementById("saveLinkBtn");
     const addResourceBtn = document.getElementById("addResourceBtn");
     const statusMsg = document.getElementById("statusMsg");
+    const signOutBtn = document.getElementById("signOutBtn");
 
     // Login functionality
     auth.onAuthStateChanged((user) => {
       if (user) {
         loginSection.classList.add("hidden");
         adminSection.classList.remove("hidden");
+        // Show sign-out button
+        signOutBtn.classList.remove("hidden");
         // Check if the logged-in user is an admin
         db.collection("admins").doc(user.uid).get().then(doc => {
           if (doc.exists) {
@@ -97,6 +120,7 @@
       } else {
         loginSection.classList.remove("hidden");
         adminSection.classList.add("hidden");
+        signOutBtn.classList.add("hidden");
         loginMsg.innerText = "";
       }
     });
@@ -155,6 +179,15 @@
       } catch (error) {
         console.error(error);
         statusMsg.innerText = "❌ Error saving resource.";
+      }
+    });
+
+    // Sign out functionality
+    signOutBtn.addEventListener("click", async () => {
+      try {
+        await auth.signOut();
+      } catch (error) {
+        console.error("Error signing out:", error);
       }
     });
   </script>
