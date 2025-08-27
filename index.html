@@ -10,6 +10,7 @@
   <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
     <h1 class="text-2xl font-bold mb-6 text-center">Admin Panel</h1>
 
+    <!-- Login Form -->
     <div id="loginSection">
       <input type="email" id="email" placeholder="Teacher Email" class="w-full border p-2 rounded mb-4">
       <input type="password" id="password" placeholder="Password" class="w-full border p-2 rounded mb-4">
@@ -17,35 +18,39 @@
       <p id="loginMsg" class="mt-3 text-center text-sm text-red-500"></p>
     </div>
 
+    <!-- Admin Controls -->
     <div id="adminSection" class="hidden">
-      <p class="mb-4 text-center text-green-600 font-semibold">✅ Logged in as Admin</p>
-      
-      <button id="signOutBtn" class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 mb-6">Sign Out</button>
+      <p class="mb-4 text-center text-green-600 font-semibold">✅ Logged in successfully!</p>
 
-      <h2 class="text-xl font-bold mb-4">Update Live Class Link</h2>
-      <select id="classSelect" class="w-full border p-2 rounded mb-4">
-        <option value="Class-V">Class V</option>
-        <option value="Class-VI">Class VI</option>
-        <option value="Class-VII">Class VII</option>
-        <option value="Class-VIII">Class VIII</option>
-        <option value="Class-IX">Class IX</option>
-        <option value="Class-X">Class X</option>
-        <option value="Class-XI">Class XI</option>
-        <option value="Class-XII">Class XII</option>
-      </select>
-      <input type="text" id="classLink" placeholder="Live Class Link" class="w-full border p-2 rounded mb-4">
-      <button id="updateLinkBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Update Link</button>
-      
-      <h2 class="text-xl font-bold mt-8 mb-4">Add Class Resource</h2>
-      <input type="text" id="resourceTitle" placeholder="Resource Title" class="w-full border p-2 rounded mb-4">
-      <input type="text" id="resourceLink" placeholder="Resource Link" class="w-full border p-2 rounded mb-4">
-      <button id="addResourceBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Add Resource</button>
-      
-      <p id="statusMsg" class="mt-3 text-center text-sm"></p>
+      <div class="mb-6">
+        <label for="classSelect" class="block text-gray-700 font-bold mb-2">Select Class:</label>
+        <select id="classSelect" class="w-full border p-2 rounded">
+          <option value="Class-V">Class V</option>
+          <option value="Class-VI">Class VI</option>
+          <option value="Class-VII">Class VII</option>
+          <option value="Class-VIII">Class VIII</option>
+        </select>
+      </div>
+
+      <!-- Live Class Link -->
+      <div class="bg-gray-50 p-6 rounded-lg mb-6 shadow-inner">
+        <h2 class="text-xl font-semibold mb-3">Live Class Link</h2>
+        <input type="url" id="classLink" placeholder="Enter live class link" class="w-full border p-2 rounded mb-3">
+        <button id="saveLinkBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Save Live Class Link</button>
+        <p id="statusMsg" class="mt-3 text-sm text-gray-500"></p>
+      </div>
+
+      <!-- Add Resource -->
+      <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+        <h2 class="text-xl font-semibold mb-3">Add Resource</h2>
+        <input type="text" id="resourceTitle" placeholder="Resource Title" class="w-full border p-2 rounded mb-3">
+        <input type="url" id="resourceLink" placeholder="Resource Link (e.g., Google Drive)" class="w-full border p-2 rounded mb-3">
+        <button id="addResourceBtn" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Add Resource</button>
+      </div>
     </div>
-
   </div>
 
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
@@ -66,76 +71,90 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const loginSection = document.getElementById("loginSection");
+    const adminSection = document.getElementById("adminSection");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginMsg = document.getElementById("loginMsg");
+    const saveLinkBtn = document.getElementById("saveLinkBtn");
+    const addResourceBtn = document.getElementById("addResourceBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
     // Login functionality
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const loginMsg = document.getElementById("loginMsg");
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-        loginMsg.innerText = "✅ Login successful!";
-        document.getElementById("loginSection").classList.add("hidden");
-        document.getElementById("adminSection").classList.remove("hidden");
-      } catch (error) {
-        loginMsg.innerText = "❌ Login failed: " + error.message;
-      }
-    });
-    
-    // Listen for authentication state changes
     auth.onAuthStateChanged((user) => {
       if (user) {
-        document.getElementById("loginSection").classList.add("hidden");
-        document.getElementById("adminSection").classList.remove("hidden");
+        loginSection.classList.add("hidden");
+        adminSection.classList.remove("hidden");
+        // Check if the logged-in user is an admin
+        db.collection("admins").doc(user.uid).get().then(doc => {
+          if (doc.exists) {
+            console.log("Admin logged in.");
+          } else {
+            // Not an admin, sign out and show message
+            auth.signOut();
+            loginMsg.innerText = "❌ You do not have admin access.";
+          }
+        });
       } else {
-        document.getElementById("loginSection").classList.remove("hidden");
-        document.getElementById("adminSection").classList.add("hidden");
+        loginSection.classList.remove("hidden");
+        adminSection.classList.add("hidden");
+        loginMsg.innerText = "";
       }
     });
 
-    // Add Sign Out functionality
-    document.getElementById("signOutBtn").addEventListener("click", async () => {
+    loginBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      if (!email || !password) {
+        loginMsg.innerText = "⚠️ Please enter email and password.";
+        return;
+      }
       try {
-        await auth.signOut();
-        window.location.href = "index.html"; // Redirect to login page after sign out
+        await auth.signInWithEmailAndPassword(email, password);
+        loginMsg.innerText = "✅ Logged in successfully!";
       } catch (error) {
-        console.error("Error signing out:", error);
+        loginMsg.innerText = `❌ ${error.message}`;
+        console.error(error);
       }
     });
 
-    // Update Live Class Link
-    document.getElementById("updateLinkBtn").addEventListener("click", async () => {
+    // Save Live Class Link
+    saveLinkBtn.addEventListener("click", async () => {
       const classId = document.getElementById("classSelect").value;
       const link = document.getElementById("classLink").value;
       if (!link) {
-        document.getElementById("statusMsg").innerText = "⚠️ Please enter a class link.";
+        statusMsg.innerText = "⚠️ Please enter a class link.";
         return;
       }
       try {
         await db.collection(classId).doc("liveClass").set({ link });
-        document.getElementById("statusMsg").innerText = "✅ Link saved successfully!";
+        statusMsg.innerText = "✅ Link saved successfully!";
       } catch (error) {
         console.error(error);
-        document.getElementById("statusMsg").innerText = "❌ Error saving link.";
+        statusMsg.innerText = "❌ Error saving link.";
       }
     });
 
     // Add Resource
-    document.getElementById("addResourceBtn").addEventListener("click", async () => {
+    addResourceBtn.addEventListener("click", async () => {
       const classId = document.getElementById("classSelect").value;
       const title = document.getElementById("resourceTitle").value;
       const link = document.getElementById("resourceLink").value;
       if (!title || !link) {
-        document.getElementById("statusMsg").innerText = "⚠️ Please enter both title and link.";
+        statusMsg.innerText = "⚠️ Please enter both title and link.";
         return;
       }
       try {
-        await db.collection(classId).doc("resources").collection("items").add({ title, link, uploadedAt: firebase.firestore.FieldValue.serverTimestamp() });
-        document.getElementById("statusMsg").innerText = "✅ Resource added successfully!";
+        await db.collection(classId).doc("resources").collection("items").add({
+          title,
+          link,
+          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        statusMsg.innerText = "✅ Resource added successfully!";
         document.getElementById("resourceTitle").value = "";
         document.getElementById("resourceLink").value = "";
       } catch (error) {
         console.error(error);
-        document.getElementById("statusMsg").innerText = "❌ Error saving resource.";
+        statusMsg.innerText = "❌ Error saving resource.";
       }
     });
   </script>
