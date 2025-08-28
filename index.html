@@ -3,77 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Manage Class Links & Resources</title>
+  <title>Admin Panel - EduConnectApp</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     body {
       font-family: 'Poppins', sans-serif;
+      background-color: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #333;
     }
-    .sign-out-btn {
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 1rem;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      margin: 2rem;
+      width: 100%;
+    }
+    .main-heading {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2c5282;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      font-weight: 600;
+      color: #4a5568;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4299e1;
+    }
+    button {
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    .btn-primary {
+      background-color: #4299e1;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #3182ce;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
       background-color: #e53e3e;
       color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      transition: background-color 0.2s ease-in-out;
     }
-    .sign-out-btn:hover {
+    .btn-secondary:hover {
       background-color: #c53030;
+      transform: translateY(-1px);
+    }
+    .status-message {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      text-align: center;
+      font-weight: 500;
+    }
+    .status-success {
+      background-color: #c6f6d5;
+      color: #2f855a;
+    }
+    .status-error {
+      background-color: #fed7d7;
+      color: #e53e3e;
     }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Admin Panel</h1>
-      <button id="signOutBtn" class="sign-out-btn hidden">Sign Out</button>
+
+  <div id="admin-login-panel" class="container" style="display: none;">
+    <h1 class="main-heading text-center">Admin Sign-In</h1>
+    <div class="form-group">
+      <label for="adminEmail">Email</label>
+      <input type="email" id="adminEmail" placeholder="Enter your email" required>
     </div>
-
-    <!-- Login Form -->
-    <div id="loginSection">
-      <input type="email" id="email" placeholder="Teacher Email" class="w-full border p-2 rounded mb-4">
-      <input type="password" id="password" placeholder="Password" class="w-full border p-2 rounded mb-4">
-      <button id="loginBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Login</button>
-      <p id="loginMsg" class="mt-3 text-center text-sm text-red-500"></p>
+    <div class="form-group">
+      <label for="adminPassword">Password</label>
+      <input type="password" id="adminPassword" placeholder="Enter your password" required>
     </div>
-
-    <!-- Admin Controls -->
-    <div id="adminSection" class="hidden">
-      <p class="mb-4 text-center text-green-600 font-semibold">✅ Logged in successfully!</p>
-
-      <div class="mb-6">
-        <label for="classSelect" class="block text-gray-700 font-bold mb-2">Select Class:</label>
-        <select id="classSelect" class="w-full border p-2 rounded">
-          <option value="Class-V">Class V</option>
-          <option value="Class-VI">Class VI</option>
-          <option value="Class-VII">Class VII</option>
-          <option value="Class-VIII">Class VIII</option>
-        </select>
-      </div>
-
-      <!-- Live Class Link -->
-      <div class="bg-gray-50 p-6 rounded-lg mb-6 shadow-inner">
-        <h2 class="text-xl font-semibold mb-3">Live Class Link</h2>
-        <input type="url" id="classLink" placeholder="Enter live class link" class="w-full border p-2 rounded mb-3">
-        <button id="saveLinkBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Save Live Class Link</button>
-        <p id="statusMsg" class="mt-3 text-sm text-gray-500"></p>
-      </div>
-
-      <!-- Add Resource -->
-      <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-        <h2 class="text-xl font-semibold mb-3">Add Resource</h2>
-        <input type="text" id="resourceTitle" placeholder="Resource Title" class="w-full border p-2 rounded mb-3">
-        <input type="url" id="resourceLink" placeholder="Resource Link (e.g., Google Drive)" class="w-full border p-2 rounded mb-3">
-        <button id="addResourceBtn" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Add Resource</button>
-      </div>
-    </div>
+    <button id="adminSignInBtn" class="btn-primary w-full">Sign In</button>
+    <div id="loginStatus" class="status-message hidden mt-4"></div>
   </div>
 
-  <!-- Firebase Scripts -->
+  <div id="admin-dashboard" class="container" style="display: none;">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="main-heading">Admin Panel</h1>
+      <button id="signOutBtn" class="btn-secondary">Sign Out</button>
+    </div>
+
+    <div class="form-group">
+      <label for="classSelect">Select Class</label>
+      <select id="classSelect" class="w-full">
+        <option value="V">Class V</option>
+        <option value="VI">Class VI</option>
+        <option value="VII">Class VII</option>
+        <option value="VIII">Class VIII</option>
+        <option value="IX">Class IX</option>
+        <option value="X">Class X</option>
+        <option value="XI">Class XI</option>
+        <option value="XII">Class XII</option>
+      </select>
+    </div>
+    
+    <div class="space-y-6">
+      <div class="p-6 bg-gray-50 rounded-lg">
+        <h2 class="text-lg font-bold mb-4 text-gray-800">Set Live Class Link</h2>
+        <div class="flex flex-col md:flex-row md:space-x-4">
+          <input type="url" id="liveClassLinkInput" placeholder="Paste live class link here..." class="flex-1">
+          <button id="saveLinkBtn" class="btn-primary mt-4 md:mt-0">Save Link</button>
+        </div>
+      </div>
+      
+      <div class="p-6 bg-gray-50 rounded-lg">
+        <h2 class="text-lg font-bold mb-4 text-gray-800">Add Resources</h2>
+        <div class="space-y-4">
+          <input type="text" id="resourceTitle" placeholder="Resource Title (e.g., Chapter 1 Notes)">
+          <input type="url" id="resourceLink" placeholder="Google Drive Link or URL">
+          <button id="addResourceBtn" class="btn-primary w-full">Add Resource</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="statusMsg" class="status-message hidden"></div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+
   <script>
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -91,80 +170,105 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const loginSection = document.getElementById("loginSection");
-    const adminSection = document.getElementById("adminSection");
-    const loginBtn = document.getElementById("loginBtn");
-    const loginMsg = document.getElementById("loginMsg");
-    const saveLinkBtn = document.getElementById("saveLinkBtn");
-    const addResourceBtn = document.getElementById("addResourceBtn");
-    const statusMsg = document.getElementById("statusMsg");
-    const signOutBtn = document.getElementById("signOutBtn");
+    const loginPanel = document.getElementById("admin-login-panel");
+    const dashboardPanel = document.getElementById("admin-dashboard");
+    const adminEmailInput = document.getElementById("adminEmail");
+    const adminPasswordInput = document.getElementById("adminPassword");
+    const adminSignInBtn = document.getElementById("adminSignInBtn");
+    const loginStatusMsg = document.getElementById("loginStatus");
 
-    // Login functionality
-    auth.onAuthStateChanged((user) => {
+    const classSelect = document.getElementById("classSelect");
+    const liveClassLinkInput = document.getElementById("liveClassLinkInput");
+    const saveLinkBtn = document.getElementById("saveLinkBtn");
+    const resourceTitle = document.getElementById("resourceTitle");
+    const resourceLink = document.getElementById("resourceLink");
+    const addResourceBtn = document.getElementById("addResourceBtn");
+    const signOutBtn = document.getElementById("signOutBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
+    function displayMessage(element, message, isError = true) {
+      element.innerText = message;
+      element.classList.remove("hidden");
+      element.classList.toggle("status-error", isError);
+      element.classList.toggle("status-success", !isError);
+    }
+
+    // --- Core Logic for Admin Access ---
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
-        loginSection.classList.add("hidden");
-        adminSection.classList.remove("hidden");
-        // Show sign-out button
-        signOutBtn.classList.remove("hidden");
-        // Check if the logged-in user is an admin
-        db.collection("admins").doc(user.uid).get().then(doc => {
-          if (doc.exists) {
-            console.log("Admin logged in.");
+        try {
+          // Check if the signed-in user is an admin by looking for their UID in the 'admins' collection
+          const adminDoc = await db.collection("admins").doc(user.uid).get();
+          if (adminDoc.exists) {
+            // User is an admin, show the dashboard and hide the login panel
+            loginPanel.style.display = 'none';
+            dashboardPanel.style.display = 'block';
           } else {
-            // Not an admin, sign out and show message
-            auth.signOut();
-            loginMsg.innerText = "❌ You do not have admin access.";
+            // User is not an admin, sign them out and show an error
+            await auth.signOut();
+            displayMessage(loginStatusMsg, "❌ Access Denied: This account is not an administrator.", true);
+            loginPanel.style.display = 'block';
+            dashboardPanel.style.display = 'none';
           }
-        });
+        } catch (error) {
+          console.error("Error during admin check:", error);
+          await auth.signOut();
+          displayMessage(loginStatusMsg, "❌ An error occurred. Please try again.", true);
+          loginPanel.style.display = 'block';
+          dashboardPanel.style.display = 'none';
+        }
       } else {
-        loginSection.classList.remove("hidden");
-        adminSection.classList.add("hidden");
-        signOutBtn.classList.add("hidden");
-        loginMsg.innerText = "";
+        // No user is signed in, show the login panel
+        loginPanel.style.display = 'block';
+        dashboardPanel.style.display = 'none';
       }
     });
 
-    loginBtn.addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+    // --- Admin Sign-In Functionality ---
+    adminSignInBtn.addEventListener("click", async () => {
+      const email = adminEmailInput.value;
+      const password = adminPasswordInput.value;
       if (!email || !password) {
-        loginMsg.innerText = "⚠️ Please enter email and password.";
+        displayMessage(loginStatusMsg, "⚠️ Please enter both email and password.", true);
         return;
       }
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        loginMsg.innerText = "✅ Logged in successfully!";
+        // The onAuthStateChanged listener will handle the rest
+        displayMessage(loginStatusMsg, "✅ Signing in...", false);
       } catch (error) {
-        loginMsg.innerText = `❌ ${error.message}`;
-        console.error(error);
+        let errorMessage = "❌ Incorrect credentials. Please try again.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          errorMessage = "❌ Incorrect email or password.";
+        }
+        displayMessage(loginStatusMsg, errorMessage, true);
+        console.error("Login error:", error);
       }
     });
 
-    // Save Live Class Link
+    // --- Existing Admin Panel Functions ---
     saveLinkBtn.addEventListener("click", async () => {
-      const classId = document.getElementById("classSelect").value;
-      const link = document.getElementById("classLink").value;
+      const classId = `Class-${classSelect.value}`;
+      const link = liveClassLinkInput.value;
       if (!link) {
-        statusMsg.innerText = "⚠️ Please enter a class link.";
+        displayMessage(statusMsg, "⚠️ Please enter a link.", true);
         return;
       }
       try {
         await db.collection(classId).doc("liveClass").set({ link });
-        statusMsg.innerText = "✅ Link saved successfully!";
+        displayMessage(statusMsg, "✅ Live class link saved successfully!", false);
       } catch (error) {
-        console.error(error);
-        statusMsg.innerText = "❌ Error saving link.";
+        console.error("Error saving link:", error);
+        displayMessage(statusMsg, "❌ Error saving link. Check your permissions.", true);
       }
     });
 
-    // Add Resource
     addResourceBtn.addEventListener("click", async () => {
-      const classId = document.getElementById("classSelect").value;
-      const title = document.getElementById("resourceTitle").value;
-      const link = document.getElementById("resourceLink").value;
+      const classId = `Class-${classSelect.value}`;
+      const title = resourceTitle.value;
+      const link = resourceLink.value;
       if (!title || !link) {
-        statusMsg.innerText = "⚠️ Please enter both title and link.";
+        displayMessage(statusMsg, "⚠️ Please enter both a title and a link.", true);
         return;
       }
       try {
@@ -173,21 +277,22 @@
           link,
           uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        statusMsg.innerText = "✅ Resource added successfully!";
-        document.getElementById("resourceTitle").value = "";
-        document.getElementById("resourceLink").value = "";
+        displayMessage(statusMsg, "✅ Resource added successfully!", false);
+        resourceTitle.value = "";
+        resourceLink.value = "";
       } catch (error) {
-        console.error(error);
-        statusMsg.innerText = "❌ Error saving resource.";
+        console.error("Error adding resource:", error);
+        displayMessage(statusMsg, "❌ Error adding resource. Check your permissions.", true);
       }
     });
 
-    // Sign out functionality
     signOutBtn.addEventListener("click", async () => {
       try {
         await auth.signOut();
+        // The onAuthStateChanged listener will automatically redirect to the login form
       } catch (error) {
         console.error("Error signing out:", error);
+        alert("Error signing out. Please try again.");
       }
     });
   </script>
