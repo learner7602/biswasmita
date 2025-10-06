@@ -1,300 +1,573 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - EduConnectApp</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f0f4f8;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-    }
-    .container {
-      max-width: 600px;
-      padding: 2rem;
-      background-color: white;
-      border-radius: 1rem;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      margin: 2rem;
-      width: 100%;
-    }
-    .main-heading {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #2c5282;
-      margin-bottom: 1.5rem;
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    label {
-      font-weight: 600;
-      color: #4a5568;
-      display: block;
-      margin-bottom: 0.5rem;
-    }
-    input, select {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.5rem;
-      transition: border-color 0.2s;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4299e1;
-    }
-    button {
-      font-weight: 600;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      transition: background-color 0.2s, transform 0.2s;
-    }
-    .btn-primary {
-      background-color: #4299e1;
-      color: white;
-    }
-    .btn-primary:hover {
-      background-color: #3182ce;
-      transform: translateY(-1px);
-    }
-    .btn-secondary {
-      background-color: #e53e3e;
-      color: white;
-    }
-    .btn-secondary:hover {
-      background-color: #c53030;
-      transform: translateY(-1px);
-    }
-    .status-message {
-      margin-top: 1.5rem;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      text-align: center;
-      font-weight: 500;
-    }
-    .status-success {
-      background-color: #c6f6d5;
-      color: #2f855a;
-    }
-    .status-error {
-      background-color: #fed7d7;
-      color: #e53e3e;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unique Mart - Exclusive Products</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gold-primary': '#D4AF37', // Classic gold
+                        'gold-light': '#FCDA97',
+                        'dark-bg': '#121212',
+                        'dark-surface': '#1C1C1C',
+                        'dark-card': '#282828',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'], // Elegant font for titles
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom artistic background and scrollbar for aesthetic */
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            /* Deep, artistic background with a subtle texture/gradient */
+            background: #121212;
+            background: radial-gradient(circle at top left, #28251e 0%, #121212 70%);
+        }
+        .gold-text-glow {
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.7), 0 0 5px rgba(212, 175, 55, 0.4);
+        }
+        .gold-button {
+            background-color: #D4AF37;
+            color: #121212;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        .gold-button:hover {
+            background-color: #FCDA97;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+            transform: translateY(-1px);
+        }
+        .styled-scrollbar::-webkit-scrollbar { width: 8px; }
+        .styled-scrollbar::-webkit-scrollbar-track { background: #282828; }
+        .styled-scrollbar::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #FCDA97; }
+        
+        /* Modal Overlay - used for both cart and product detail */
+        #cart-modal-overlay, #product-detail-modal-overlay {
+            z-index: 50; /* Above everything else */
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="text-gray-100">
 
-  <div id="admin-login-panel" class="container" style="display: none;">
-    <h1 class="main-heading text-center">Admin Sign-In</h1>
-    <div class="form-group">
-      <label for="adminEmail">Email</label>
-      <input type="email" id="adminEmail" placeholder="Enter your email" required>
-    </div>
-    <div class="form-group">
-      <label for="adminPassword">Password</label>
-      <input type="password" id="adminPassword" placeholder="Enter your password" required>
-    </div>
-    <button id="adminSignInBtn" class="btn-primary w-full">Sign In</button>
-    <div id="loginStatus" class="status-message hidden mt-4"></div>
-  </div>
+    <header class="sticky top-0 z-40 bg-dark-bg/95 backdrop-blur-sm border-b border-gold-primary/30 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-serif font-bold text-gold-primary gold-text-glow">
+                Unique Mart
+            </h1>
+            <button id="open-cart-btn" class="flex items-center space-x-2 p-2 rounded-full gold-button hover:ring-2 hover:ring-gold-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span id="cart-count" class="font-bold text-sm">0</span>
+            </button>
+        </div>
+    </header>
 
-  <div id="admin-dashboard" class="container" style="display: none;">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="main-heading">Admin Panel</h1>
-      <button id="signOutBtn" class="btn-secondary">Sign Out</button>
-    </div>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-16">
+            <h2 class="text-5xl md:text-6xl font-serif font-extrabold text-gold-light gold-text-glow mb-4">
+                The Exclusive Collection
+            </h2>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                Discover curated products of unparalleled quality and artistic design, selected for the discerning few.
+            </p>
+        </div>
 
-    <div class="form-group">
-      <label for="classSelect">Select Class</label>
-      <select id="classSelect" class="w-full">
-        <option value="V">Class V</option>
-        <option value="VI">Class VI</option>
-        <option value="VII">Class VII</option>
-        <option value="VIII">Class VIII</option>
-        <option value="IX">Class IX</option>
-        <option value="X">Class X</option>
-        <option value="XI">Class XI</option>
-        <option value="XII">Class XII</option>
-      </select>
+        <section id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            </section>
+    </main>
+
+    <div id="cart-modal-overlay" class="fixed inset-0 flex items-center justify-center">
+        <div id="cart-modal" class="bg-dark-surface rounded-xl shadow-2xl p-6 w-11/12 max-w-lg styled-scrollbar overflow-y-auto max-h-[90vh] border border-gold-primary/50">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-700">
+                <h3 class="text-3xl font-serif font-bold text-gold-primary">Your Order Cart</h3>
+                <button id="close-cart-btn" class="text-gray-400 hover:text-gold-light transition duration-150">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div id="cart-items-list" class="py-4 space-y-4 min-h-[100px]">
+                <p id="empty-cart-message" class="text-center text-gray-500 italic">Your cart is currently empty. Start exploring!</p>
+            </div>
+
+            <div id="cart-summary" class="pt-4 border-t border-gray-700 mt-4 hidden">
+                <div class="flex justify-between items-center text-xl font-bold mb-4">
+                    <span class="text-gold-light">Total:</span>
+                    <span id="cart-total" class="text-gold-primary">₹0.00</span>
+                </div>
+                <button id="open-checkout-btn" class="w-full gold-button font-bold py-3 px-4 rounded-lg text-lg">
+                    Proceed to Manual Order
+                </button>
+            </div>
+        </div>
     </div>
     
-    <div class="space-y-6">
-      <div class="p-6 bg-gray-50 rounded-lg">
-        <h2 class="text-lg font-bold mb-4 text-gray-800">Set Live Class Link</h2>
-        <div class="flex flex-col md:flex-row md:space-x-4">
-          <input type="url" id="liveClassLinkInput" placeholder="Paste live class link here..." class="flex-1">
-          <button id="saveLinkBtn" class="btn-primary mt-4 md:mt-0">Save Link</button>
+    <div id="checkout-modal-overlay" class="fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="bg-dark-surface rounded-xl shadow-2xl p-6 w-11/12 max-w-xl border border-gold-primary/50">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-700">
+                <h3 class="text-3xl font-serif font-bold text-gold-primary">Manual Order Inquiry</h3>
+                <button id="close-checkout-btn" class="text-gray-400 hover:text-gold-light transition duration-150">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <p class="text-gray-400 mt-4 mb-6">
+                Please provide your contact details. Our team will manually review your order (Total: <span id="checkout-total-display" class="font-bold text-gold-light">₹0.00</span>) and contact you within 24 hours to arrange payment and delivery details.
+            </p>
+            
+            <form id="order-form" class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gold-light mb-1">Full Name</label>
+                    <input type="text" id="name" required class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gold-light mb-1">Email Address</label>
+                    <input type="email" id="email" required class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500">
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gold-light mb-1">Phone Number</label>
+                    <input type="tel" id="phone" required class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500">
+                </div>
+                <div>
+                    <label for="pincode" class="block text-sm font-medium text-gold-light mb-1">Delivery Pincode</label>
+                    <input type="text" id="pincode" required pattern="\d{6}" maxlength="6" class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500" placeholder="e.g., 721429">
+                </div>
+                <button type="submit" class="w-full gold-button font-bold py-3 px-4 rounded-lg text-lg mt-6">
+                    Submit Order Inquiry
+                </button>
+                <p id="order-message" class="text-center pt-2 text-green-400 font-semibold hidden">Your inquiry has been successfully submitted! We will contact you soon.</p>
+                <p id="pincode-error-message" class="text-center pt-2 text-red-500 font-semibold hidden">Delivery not available for this Pincode. Please check your location.</p>
+                </form>
         </div>
-      </div>
-      
-      <div class="p-6 bg-gray-50 rounded-lg">
-        <h2 class="text-lg font-bold mb-4 text-gray-800">Add Resources</h2>
-        <div class="space-y-4">
-          <input type="text" id="resourceTitle" placeholder="Resource Title (e.g., Chapter 1 Notes)">
-          <input type="url" id="resourceLink" placeholder="Google Drive Link or URL">
-          <button id="addResourceBtn" class="btn-primary w-full">Add Resource</button>
-        </div>
-      </div>
     </div>
-    
-    <div id="statusMsg" class="status-message hidden"></div>
-  </div>
 
-  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <div id="product-detail-modal-overlay" class="fixed inset-0 flex items-center justify-center hidden z-50">
+        <div id="product-detail-modal" class="bg-dark-surface rounded-xl shadow-2xl p-6 w-11/12 max-w-3xl styled-scrollbar overflow-y-auto max-h-[90vh] border border-gold-primary/50">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-700">
+                <h3 id="detail-modal-title" class="text-3xl font-serif font-bold text-gold-primary">Product Details</h3>
+                <button id="close-product-detail-btn" class="text-gray-400 hover:text-gold-light transition duration-150">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
 
-  <script>
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyApjKA34mwvz_gWH9V0RY4wHbmMEP6oqRg",
-      authDomain: "educonnectapp-ae08d.firebaseapp.com",
-      projectId: "educonnectapp-ae08d",
-      storageBucket: "educonnectapp-ae08d.firebasestorage.app",
-      messagingSenderId: "10974354104",
-      appId: "1:10974354104:web:228ca789dfb241f43ff24d",
-      measurementId: "G-XMDY71K3ZR"
-    };
+            <div id="product-detail-content" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div class="space-y-4">
+                    <img id="detail-main-image" src="" alt="Product Main Image" class="w-full h-96 object-cover rounded-lg shadow-lg border border-gold-primary/30">
+                    
+                    <div id="detail-image-gallery" class="flex space-x-3 pt-2">
+                        </div>
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+                    <h4 id="detail-name" class="text-3xl font-serif font-extrabold text-gold-light pt-4"></h4>
+                    <p id="detail-price" class="text-4xl font-bold text-gold-primary"></p>
+                    <button id="detail-add-to-cart" class="w-full gold-button font-bold py-3 px-4 rounded-lg text-lg">
+                        Add to Cart
+                    </button>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h5 class="text-xl font-semibold text-gold-light mb-2 border-b border-gray-700 pb-1">Description</h5>
+                        <p id="detail-description" class="text-gray-400 leading-relaxed"></p>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-xl font-semibold text-gold-light mb-2 border-b border-gray-700 pb-1">Shipping & Delivery</h5>
+                        <ul id="detail-shipping-info" class="text-gray-400 space-y-2">
+                            </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // --- Product Data ---
+        // Updated to use an 'images' array for multiple image placeholders
+        const products = [
+            { 
+                id: 1, 
+                name: "UNINUT", 
+                price: 350.00, 
+                images: [
+                    "uninut1.png",
+                    "uninut2.png",
+                    "uninut3.png"
+                ], 
+                description: "Uninut Peanut Butter is a celebration of nature's simple goodness, crafted for true peanut lovers. We meticulously select high-quality, perfectly roasted peanuts, ensuring every jar delivers an authentic, robust flavor. Our unique process grinds them into an irresistibly smooth and creamy spread that melts delightfully on your tongue. With Uninut, you experience the pure essence of peanuts, free from unnecessary additives or artificial ingredients. It's the versatile staple you need, perfect for invigorating breakfasts, satisfying snacks, or inspiring your culinary creations. Beyond its incredible taste, Uninut provides a natural source of protein and healthy fats to fuel your day. Spread it generously on toast, swirl it into smoothies, or enjoy it straight from the spoon for an instant burst of delicious energy. Discover Uninut: where genuine flavor meets everyday perfection." 
+            },
+            { 
+                id: 2, 
+                name: "Puffed Rice", 
+                price: 90.00, 
+                images: [
+                    "rice1.png",
+                    "rice2.png"
+                ], 
+                description: "Discover the light and airy crunch of our premium Puffed Rice (Muri/Murmura), the perfect traditional snack for any time of day. Crafted using an age-old, handmade process, these grains are popped to a delicate crispness, ensuring a superior texture and fresh taste in every bite. This naturally gluten-free snack is incredibly versatile, serving as the essential ingredient for beloved Indian street foods like Bhel Puri and Jhal Muri. Enjoy it simply with a sprinkle of salt or mix it with spices, nuts, and chopped vegetables for a nutritious, low-fat treat. Our commitment is to deliver a consistently high-quality, pure product free from artificial additives or preservatives. Packaged for freshness, this puffed rice retains its signature lightness, making it a delicious and satisfying guilt-free option. Perfect for quick snacks, light breakfasts, or as a crunchy addition to trail mixes." 
+            },
+            { 
+                id: 3, 
+                name: "Shelled Groundnut", 
+                price: 150.00, 
+                images: [
+                    "groundnut1.png",
+                    "groundnut2.png"
+                ], 
+                description: "Sourced from the finest farms, our 1 kg pack of premium shelled groundnuts offers pure, natural goodness perfect for snacking, cooking, or making your own peanut butter. These high-quality, whole kernels are carefully selected for a rich, satisfying crunch and robust flavor. Packed fresh to ensure maximum taste and nutritional value, they are a fantastic source of plant-based protein and healthy fats. Enjoy them raw, roasted, or as a versatile ingredient in your favorite recipes. Elevate your pantry with this essential, wholesome snack." 
+            },
+            { 
+                id: 4, 
+                name: "Cosmic Silk Scarf", 
+                price: 8999.00, 
+                images: [
+                    "https://placehold.co/400x400/282828/D4AF37?text=Scarf+Pattern",
+                    "https://placehold.co/400x400/1C1C1C/FCDA97?text=Scarf+Detail+Shot"
+                ], 
+                description: "Woven with pure celestial silk, featuring a pattern inspired by distant galaxies. Measures 90x90 cm. Dry clean only. A true piece of wearable art, perfect for any season." 
+            },
+            { 
+                id: 5, 
+                name: "Gilded Fountain Pen Set", 
+                price: 29900.00, 
+                images: [
+                    "https://placehold.co/400x400/282828/D4AF37?text=Pen+Main+View",
+                    "https://placehold.co/400x400/1C1C1C/FCDA97?text=Pen+Nib+Detail"
+                ], 
+                description: "Smooth writing instrument with an 18k gold-plated nib, presented in a mahogany box. Includes a piston converter and a bottle of exclusive dark ink. Perfectly balanced for effortless writing." 
+            },
+            { 
+                id: 6, 
+                name: "Aurora Crystal Decanter", 
+                price: 34900.00, 
+                images: [
+                    "https://placehold.co/400x400/282828/D4AF37?text=Decanter+Front",
+                    "https://placehold.co/400x400/1C1C1C/FCDA97?text=Decanter+Base"
+                ], 
+                description: "Hand-blown crystal decanter that refracts light in an array of golden hues. Capacity of 750ml, designed to aerate and preserve the finest spirits. Hand wash recommended." 
+            },
+        ];
 
-    const loginPanel = document.getElementById("admin-login-panel");
-    const dashboardPanel = document.getElementById("admin-dashboard");
-    const adminEmailInput = document.getElementById("adminEmail");
-    const adminPasswordInput = document.getElementById("adminPassword");
-    const adminSignInBtn = document.getElementById("adminSignInBtn");
-    const loginStatusMsg = document.getElementById("loginStatus");
+        let cart = [];
+        
+        // NEW: Approved Pincodes for delivery
+        const approvedPincodes = ["721429", "721420"];
 
-    const classSelect = document.getElementById("classSelect");
-    const liveClassLinkInput = document.getElementById("liveClassLinkInput");
-    const saveLinkBtn = document.getElementById("saveLinkBtn");
-    const resourceTitle = document.getElementById("resourceTitle");
-    const resourceLink = document.getElementById("resourceLink");
-    const addResourceBtn = document.getElementById("addResourceBtn");
-    const signOutBtn = document.getElementById("signOutBtn");
-    const statusMsg = document.getElementById("statusMsg");
+        // --- Mock Shipping Data for Modal ---
+        const mockShippingDetails = {
+            standard: "Standard Delivery (5-7 business days): Free",
+            express: "Express Delivery (2-3 business days): 100.00",
+            international: "International Shipping (10-14 business days): Calculated upon inquiry.",
+            returns: "Not Available (comming Soon)"
+        };
 
-    function displayMessage(element, message, isError = true) {
-      element.innerText = message;
-      element.classList.remove("hidden");
-      element.classList.toggle("status-error", isError);
-      element.classList.toggle("status-success", !isError);
-    }
+        // --- DOM Elements ---
+        const productGrid = document.getElementById('product-grid');
+        const cartCount = document.getElementById('cart-count');
+        const cartItemsList = document.getElementById('cart-items-list');
+        const cartTotalDisplay = document.getElementById('cart-total');
+        const cartSummary = document.getElementById('cart-summary');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const cartModalOverlay = document.getElementById('cart-modal-overlay');
+        const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
+        const checkoutTotalDisplay = document.getElementById('checkout-total-display');
+        const orderForm = document.getElementById('order-form');
+        const orderMessage = document.getElementById('order-message');
+        
+        // NEW: Pincode Error Message Element
+        const pincodeErrorMessage = document.getElementById('pincode-error-message'); 
 
-    // --- Core Logic for Admin Access ---
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        try {
-          // Check if the signed-in user is an admin by looking for their UID in the 'admins' collection
-          const adminDoc = await db.collection("admins").doc(user.uid).get();
-          if (adminDoc.exists) {
-            // User is an admin, show the dashboard and hide the login panel
-            loginPanel.style.display = 'none';
-            dashboardPanel.style.display = 'block';
-          } else {
-            // User is not an admin, sign them out and show an error
-            await auth.signOut();
-            displayMessage(loginStatusMsg, "❌ Access Denied: This account is not an administrator.", true);
-            loginPanel.style.display = 'block';
-            dashboardPanel.style.display = 'none';
-          }
-        } catch (error) {
-          console.error("Error during admin check:", error);
-          await auth.signOut();
-          displayMessage(loginStatusMsg, "❌ An error occurred. Please try again.", true);
-          loginPanel.style.display = 'block';
-          dashboardPanel.style.display = 'none';
+        // New Product Detail Modal Elements (Updated)
+        const productDetailModalOverlay = document.getElementById('product-detail-modal-overlay');
+        const closeProductDetailBtn = document.getElementById('close-product-detail-btn');
+        const detailMainImage = document.getElementById('detail-main-image'); // New ID for the main image
+        const detailImageGallery = document.getElementById('detail-image-gallery'); // New ID for the thumbnail container
+        const detailName = document.getElementById('detail-name');
+        const detailPrice = document.getElementById('detail-price');
+        const detailDescription = document.getElementById('detail-description');
+        const detailShippingInfo = document.getElementById('detail-shipping-info');
+        const detailAddToCartBtn = document.getElementById('detail-add-to-cart');
+
+        /**
+         * Helper function to switch the main image in the detail modal.
+         * @param {string} url The URL of the image to display.
+         */
+        window.setMainImage = function(url) {
+            detailMainImage.src = url;
+            
+            // Highlight the currently selected thumbnail
+            const thumbnails = document.querySelectorAll('#detail-image-gallery img');
+            thumbnails.forEach(thumb => {
+                thumb.classList.remove('border-gold-primary');
+                thumb.classList.add('border-gray-700', 'hover:border-gold-light');
+            });
+
+            // Find the image element that matches the URL and highlight it
+            const activeThumb = Array.from(thumbnails).find(thumb => thumb.src === url);
+            if (activeThumb) {
+                activeThumb.classList.remove('border-gray-700', 'hover:border-gold-light');
+                activeThumb.classList.add('border-gold-primary');
+            }
         }
-      } else {
-        // No user is signed in, show the login panel
-        loginPanel.style.display = 'block';
-        dashboardPanel.style.display = 'none';
-      }
-    });
 
-    // --- Admin Sign-In Functionality ---
-    adminSignInBtn.addEventListener("click", async () => {
-      const email = adminEmailInput.value;
-      const password = adminPasswordInput.value;
-      if (!email || !password) {
-        displayMessage(loginStatusMsg, "⚠️ Please enter both email and password.", true);
-        return;
-      }
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-        // The onAuthStateChanged listener will handle the rest
-        displayMessage(loginStatusMsg, "✅ Signing in...", false);
-      } catch (error) {
-        let errorMessage = "❌ Incorrect credentials. Please try again.";
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          errorMessage = "❌ Incorrect email or password.";
+
+        // --- Core Functions ---
+
+        /**
+         * Renders the product grid on the main page.
+         */
+        function renderProducts() {
+            productGrid.innerHTML = products.map(product => `
+                <div onclick="openProductDetail(${product.id})" class="bg-dark-card p-6 rounded-xl shadow-xl hover:shadow-gold-primary/30 transition duration-300 transform hover:scale-[1.02] border border-gray-800 cursor-pointer">
+                    <img src="${product.images[0]}" alt="${product.name}" class="w-full h-48 object-cover rounded-lg mb-4 border border-gold-primary/20">
+                    <h3 class="text-2xl font-serif font-semibold text-gold-light mb-2">${product.name}</h3>
+                    <p class="text-gray-400 text-sm mb-4 h-12 overflow-hidden">${product.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-gold-primary">₹${product.price.toFixed(2)}</span>
+                        <button onclick="event.stopPropagation(); addToCart(${product.id})" class="gold-button font-medium py-2 px-4 rounded-lg text-sm">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
-        displayMessage(loginStatusMsg, errorMessage, true);
-        console.error("Login error:", error);
-      }
-    });
 
-    // --- Existing Admin Panel Functions ---
-    saveLinkBtn.addEventListener("click", async () => {
-      const classId = `Class-${classSelect.value}`;
-      const link = liveClassLinkInput.value;
-      if (!link) {
-        displayMessage(statusMsg, "⚠️ Please enter a link.", true);
-        return;
-      }
-      try {
-        await db.collection(classId).doc("liveClass").set({ link });
-        displayMessage(statusMsg, "✅ Live class link saved successfully!", false);
-      } catch (error) {
-        console.error("Error saving link:", error);
-        displayMessage(statusMsg, "❌ Error saving link. Check your permissions.", true);
-      }
-    });
+        /**
+         * Adds a product to the cart or increments its quantity.
+         * @param {number} productId The ID of the product to add.
+         */
+        window.addToCart = function(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
 
-    addResourceBtn.addEventListener("click", async () => {
-      const classId = `Class-${classSelect.value}`;
-      const title = resourceTitle.value;
-      const link = resourceLink.value;
-      if (!title || !link) {
-        displayMessage(statusMsg, "⚠️ Please enter both a title and a link.", true);
-        return;
-      }
-      try {
-        await db.collection(classId).doc("resources").collection("items").add({
-          title,
-          link,
-          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            
+            renderCart();
+            openCart();
+        }
+
+        /**
+         * Updates the quantity of a specific item in the cart.
+         * @param {number} productId The ID of the product to update.
+         * @param {number} delta The change in quantity (-1 or 1).
+         */
+        window.updateCartItemQuantity = function(productId, delta) {
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex === -1) return;
+
+            const newQuantity = cart[itemIndex].quantity + delta;
+            
+            if (newQuantity <= 0) {
+                // Remove item if quantity drops to 0
+                cart.splice(itemIndex, 1);
+            } else {
+                cart[itemIndex].quantity = newQuantity;
+            }
+
+            renderCart();
+        }
+
+        /**
+         * Renders the cart contents and updates the total/count.
+         */
+        function renderCart() {
+            let total = 0;
+            let count = 0;
+
+            cartItemsList.innerHTML = cart.map(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                count += item.quantity;
+
+                return `
+                    <div class="flex items-center space-x-4 bg-dark-card p-3 rounded-lg border border-gray-700">
+                        <img src="${item.images[0]}" alt="${item.name}" class="w-12 h-12 object-cover rounded-md">
+                        <div class="flex-grow">
+                            <p class="font-medium text-gold-light">${item.name}</p>
+                            <p class="text-sm text-gray-400">₹${item.price.toFixed(2)} x ${item.quantity}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateCartItemQuantity(${item.id}, -1)" class="text-gold-primary hover:text-gold-light transition duration-150 p-1 rounded-full border border-gold-primary/50 w-8 h-8 flex items-center justify-center text-xl font-bold">-</button>
+                            <span class="text-lg font-semibold">${item.quantity}</span>
+                            <button onclick="updateCartItemQuantity(${item.id}, 1)" class="text-gold-primary hover:text-gold-light transition duration-150 p-1 rounded-full border border-gold-primary/50 w-8 h-8 flex items-center justify-center text-xl font-bold">+</button>
+                        </div>
+                        <span class="font-bold text-gold-primary text-lg w-16 text-right">₹${itemTotal.toFixed(2)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            cartTotalDisplay.textContent = `₹${total.toFixed(2)}`;
+            cartCount.textContent = count;
+            checkoutTotalDisplay.textContent = `₹${total.toFixed(2)}`;
+
+            if (cart.length > 0) {
+                cartSummary.classList.remove('hidden');
+                emptyCartMessage.classList.add('hidden');
+            } else {
+                cartSummary.classList.add('hidden');
+                emptyCartMessage.classList.remove('hidden');
+            }
+        }
+
+        function openCart() { cartModalOverlay.style.display = 'flex'; }
+        function closeCart() { cartModalOverlay.style.display = 'none'; }
+
+        function openCheckout() {
+            if (cart.length === 0) return;
+            closeCart();
+            orderMessage.classList.add('hidden');
+            pincodeErrorMessage.classList.add('hidden'); // NEW: Hide pincode error on open
+            orderForm.reset();
+            checkoutModalOverlay.style.display = 'flex';
+        }
+
+        function closeCheckout() { checkoutModalOverlay.style.display = 'none'; }
+
+        /**
+         * Opens the product detail modal with the specified product's data.
+         * @param {number} productId The ID of the product to display.
+         */
+        window.openProductDetail = function(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            // --- 1. Populate Images ---
+            // Set the main image to the first one in the array
+            detailMainImage.src = product.images[0];
+            detailMainImage.alt = product.name + " Main Image";
+
+            // Populate the image gallery/thumbnails
+            detailImageGallery.innerHTML = product.images.map((imageURL, index) => {
+                // Highlight the first thumbnail (which is currently displayed as the main image)
+                const isFirst = index === 0;
+                const borderClass = isFirst ? 'border-gold-primary' : 'border-gray-700 hover:border-gold-light';
+
+                return `
+                    <img 
+                        src="${imageURL}" 
+                        alt="View ${index + 1}" 
+                        onclick="setMainImage('${imageURL}')"
+                        class="w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${borderClass} transition duration-150"
+                    >
+                `;
+            }).join('');
+
+            // --- 2. Populate other content ---
+            detailName.textContent = product.name;
+            detailPrice.textContent = `₹${product.price.toFixed(2)}`;
+            detailDescription.textContent = product.description;
+
+            // Populate shipping details
+            detailShippingInfo.innerHTML = `
+                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.standard}</span></li>
+                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.express}</span></li>
+                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.international}</span></li>
+                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.returns}</span></li>
+            `;
+
+            // Re-bind the Add to Cart button to the specific product ID
+            detailAddToCartBtn.onclick = () => {
+                addToCart(product.id);
+                closeProductDetail(); 
+            };
+
+            // Show the modal
+            productDetailModalOverlay.style.display = 'flex';
+        }
+
+        /**
+         * Closes the product detail modal.
+         */
+        function closeProductDetail() {
+            productDetailModalOverlay.style.display = 'none';
+        }
+
+
+        // --- Event Listeners ---
+        document.getElementById('open-cart-btn').addEventListener('click', openCart);
+        document.getElementById('close-cart-btn').addEventListener('click', closeCart);
+        document.getElementById('open-checkout-btn').addEventListener('click', openCheckout);
+        document.getElementById('close-checkout-btn').addEventListener('click', closeCheckout);
+        closeProductDetailBtn.addEventListener('click', closeProductDetail);
+        
+        // Handle form submission (Manual Order Process)
+        orderForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Hide previous messages
+            orderMessage.classList.add('hidden');
+            pincodeErrorMessage.classList.add('hidden'); // NEW: Hide error message before validation
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const pincode = document.getElementById('pincode').value.trim(); // NEW: Get pincode value
+            
+            // --- NEW: Pincode Validation Logic ---
+            if (!approvedPincodes.includes(pincode)) {
+                pincodeErrorMessage.classList.remove('hidden'); // Show error message
+                return; // Stop form submission
+            }
+            // --- END NEW VALIDATION ---
+
+            // 1. Prepare Order Details (This is what you would receive)
+            const orderDetails = {
+                customer: { name, email, phone, pincode }, // NEW: Include pincode
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    total: `₹${(item.price * item.quantity).toFixed(2)}` 
+                })),
+                total: `₹${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}`,
+                payment_mode: "Manual/Contact Required",
+            };
+
+            console.log("--- ORDER SUBMITTED (MANUAL PROCESS) ---");
+            console.log(orderDetails);
+            console.log("-----------------------------------------");
+
+            // 2. Clear Cart and Show Success Message
+            cart = [];
+            renderCart();
+            orderForm.reset();
+            orderMessage.classList.remove('hidden');
+
+            // Optionally, auto-close the modal after a delay
+            setTimeout(() => {
+                closeCheckout();
+            }, 3000); 
         });
-        displayMessage(statusMsg, "✅ Resource added successfully!", false);
-        resourceTitle.value = "";
-        resourceLink.value = "";
-      } catch (error) {
-        console.error("Error adding resource:", error);
-        displayMessage(statusMsg, "❌ Error adding resource. Check your permissions.", true);
-      }
-    });
 
-    signOutBtn.addEventListener("click", async () => {
-      try {
-        await auth.signOut();
-        // The onAuthStateChanged listener will automatically redirect to the login form
-      } catch (error) {
-        console.error("Error signing out:", error);
-        alert("Error signing out. Please try again.");
-      }
-    });
-  </script>
+
+        // --- Initialization ---
+        window.onload = () => {
+            renderProducts();
+            renderCart(); // Initialize cart view
+        };
+    </script>
 </body>
 </html>
