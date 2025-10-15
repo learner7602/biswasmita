@@ -3,571 +3,848 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unique Mart - Exclusive Products</title>
+    <title>3D Urban Highway Racer (Detailed Environment)</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        'gold-primary': '#D4AF37', // Classic gold
-                        'gold-light': '#FCDA97',
-                        'dark-bg': '#121212',
-                        'dark-surface': '#1C1C1C',
-                        'dark-card': '#282828',
-                    },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
-                        serif: ['"Playfair Display"', 'serif'], // Elegant font for titles
+                    },
+                    colors: {
+                        'primary': '#1f2937', 
+                        'secondary': '#facc15', 
+                        'road': '#1e272e', 
+                        'obstacle': '#10b981', 
+                        'car': '#be185d', 
+                        'wheel': '#111827', 
+                        'barrier': '#2c3e50', 
+                        'building': '#1c2833', 
+                        'shoulder': '#2f3640', // New: Darker concrete/gravel look
                     }
                 }
             }
         }
     </script>
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
-        /* Custom artistic background and scrollbar for aesthetic */
+        /* Custom CSS for the full-screen canvas and body */
         body {
+            margin: 0;
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            /* Deep, artistic background with a subtle texture/gradient */
-            background: #121212;
-            background: radial-gradient(circle at top left, #28251e 0%, #121212 70%);
+            background-color: #111827; 
         }
-        .gold-text-glow {
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.7), 0 0 5px rgba(212, 175, 55, 0.4);
+        #scene-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
         }
-        .gold-button {
-            background-color: #D4AF37;
-            color: #121212;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        .ui-panel {
+            z-index: 20;
+            background-color: rgba(31, 41, 55, 0.9);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
         }
-        .gold-button:hover {
-            background-color: #FCDA97;
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
-            transform: translateY(-1px);
-        }
-        .styled-scrollbar::-webkit-scrollbar { width: 8px; }
-        .styled-scrollbar::-webkit-scrollbar-track { background: #282828; }
-        .styled-scrollbar::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
-        .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: #FCDA97; }
-        
-        /* Modal Overlay - used for both cart and product detail */
-        #cart-modal-overlay, #product-detail-modal-overlay {
-            z-index: 50; /* Above everything else */
-            display: none;
+        .game-over-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 30;
+            display: none;
+            place-items: center;
+        }
+        /* Style for control buttons */
+        .control-button {
+            border: 2px solid theme('colors.secondary');
+            user-select: none;
+            -webkit-tap-highlight-color: transparent; 
         }
     </style>
 </head>
-<body class="text-gray-100">
+<body>
 
-    <header class="sticky top-0 z-40 bg-dark-bg/95 backdrop-blur-sm border-b border-gold-primary/30 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 class="text-3xl font-serif font-bold text-gold-primary gold-text-glow">
-                Unique Mart
-            </h1>
-            <button id="open-cart-btn" class="flex items-center space-x-2 p-2 rounded-full gold-button hover:ring-2 hover:ring-gold-primary">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span id="cart-count" class="font-bold text-sm">0</span>
+    <!-- Three.js Scene Container -->
+    <div id="scene-container"></div>
+
+    <!-- UI Score and Controls Panel (Top-Right) -->
+    <div id="ui-controls" class="ui-panel fixed top-4 right-4 p-3 rounded-xl shadow-2xl border border-secondary/20 text-white flex flex-col items-end gap-2">
+        <div class="text-xl font-extrabold text-secondary tracking-wider whitespace-nowrap">
+            DISTANCE: <span id="game-score">0</span>m
+        </div>
+        
+        <!-- Instructions (Updated for speed control) -->
+        <div class="text-sm text-gray-300 p-1 border border-gray-600 rounded-lg hidden sm:block">
+            <span class="font-bold text-secondary">Controls:</span> 
+            Steer: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> | 
+            Speed: <kbd>W</kbd>/<kbd>S</kbd> or <kbd>↑</kbd>/<kbd>↓</kbd>
+        </div>
+    </div>
+
+    <!-- Touch Controls for Mobile Users (Bottom) -->
+    <div id="touch-controls" class="fixed bottom-0 left-0 right-0 p-4 flex flex-col items-center sm:hidden z-20">
+        <!-- Speed Controls (Top Row of Mobile Controls) -->
+        <div class="flex justify-center gap-4 mb-4 w-full max-w-sm">
+            <button id="accelerate-button" class="control-button bg-green-600/80 text-white transition duration-150 p-3 rounded-xl shadow-xl w-32 h-12 text-sm font-black active:bg-green-700/80 border-green-500">
+                ACCELERATE (▲)
+            </button>
+            <button id="brake-button" class="control-button bg-red-600/80 text-white transition duration-150 p-3 rounded-xl shadow-xl w-32 h-12 text-sm font-black active:bg-red-700/80 border-red-500">
+                BRAKE (▼)
             </button>
         </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="text-center mb-16">
-            <h2 class="text-5xl md:text-6xl font-serif font-extrabold text-gold-light gold-text-glow mb-4">
-                The Exclusive Collection
-            </h2>
-            <p class="text-lg text-gray-400 max-w-2xl mx-auto">
-                Discover curated products of unparalleled quality and artistic design, selected for the discerning few.
-            </p>
-        </div>
-
-        <section id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            </section>
-    </main>
-
-    <div id="cart-modal-overlay" class="fixed inset-0 flex items-center justify-center">
-        <div id="cart-modal" class="bg-dark-surface rounded-xl shadow-2xl p-6 w-11/12 max-w-lg styled-scrollbar overflow-y-auto max-h-[90vh] border border-gold-primary/50">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-700">
-                <h3 class="text-3xl font-serif font-bold text-gold-primary">Your Order Cart</h3>
-                <button id="close-cart-btn" class="text-gray-400 hover:text-gold-light transition duration-150">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <div id="cart-items-list" class="py-4 space-y-4 min-h-[100px]">
-                <p id="empty-cart-message" class="text-center text-gray-500 italic">Your cart is currently empty. Start exploring!</p>
-            </div>
-
-            <div id="cart-summary" class="pt-4 border-t border-gray-700 mt-4 hidden">
-                <div class="flex justify-between items-center text-xl font-bold mb-4">
-                    <span class="text-gold-light">Total:</span>
-                    <span id="cart-total" class="text-gold-primary">₹0.00</span>
-                </div>
-                <button id="open-checkout-btn" class="w-full gold-button font-bold py-3 px-4 rounded-lg text-lg">
-                    Proceed to Manual Order
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="checkout-modal-overlay" class="fixed inset-0 flex items-center justify-center hidden z-50">
-        <div class="bg-dark-surface rounded-xl shadow-2xl p-6 w-11/12 max-w-xl border border-gold-primary/50">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-700">
-                <h3 class="text-3xl font-serif font-bold text-gold-primary">Manual Order Inquiry</h3>
-                <button id="close-checkout-btn" class="text-gray-400 hover:text-gold-light transition duration-150">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <p class="text-gray-400 mt-4 mb-6">
-                Please provide your contact details. Our team will manually review your order (Total: <span id="checkout-total-display" class="font-bold text-gold-light">₹0.00</span>) and contact you within 24 hours to arrange payment and delivery details.
-            </p>
-            
-            <form id="order-form" class="space-y-4">
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gold-light mb-1">Full Name</label>
-                    <input type="text" id="name" required class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500">
-                </div>
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gold-light mb-1">Email Address</label>
-                    <input type="email" id="email" required class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500">
-                </div>
-                <div>
-                    <label for="phone" class="block text-sm font-medium text-gold-light mb-1">Phone Number</label>
-                    <input type="tel" id="phone" required class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500">
-                </div>
-                <div>
-                    <label for="pincode" class="block text-sm font-medium text-gold-light mb-1">Delivery Pincode</label>
-                    <input type="text" id="pincode" required pattern="\d{6}" maxlength="6" class="w-full p-3 rounded-md bg-dark-card border border-gray-700 focus:ring-gold-primary focus:border-gold-primary text-gray-100 placeholder-gray-500" placeholder="e.g., 721429">
-                </div>
-                <button type="submit" class="w-full gold-button font-bold py-3 px-4 rounded-lg text-lg mt-6">
-                    Submit Order Inquiry
-                </button>
-                <p id="order-message" class="text-center pt-2 text-green-400 font-semibold hidden">Your inquiry has been successfully submitted! We will contact you soon.</p>
-                <p id="pincode-error-message" class="text-center pt-2 text-red-500 font-semibold hidden">Delivery not available for this Pincode. Please check your location.</p>
-                </form>
+        <!-- Steering Controls (Bottom Row of Mobile Controls) -->
+        <div class="flex justify-between w-full max-w-sm">
+            <button id="left-button" class="control-button bg-primary/80 text-secondary transition duration-150 p-4 rounded-xl shadow-xl w-32 h-16 text-4xl font-black active:bg-secondary/20">
+                &#9664; <!-- Left Arrow -->
+            </button>
+            <button id="right-button" class="control-button bg-primary/80 text-secondary transition duration-150 p-4 rounded-xl shadow-xl w-32 h-16 text-4xl font-black active:bg-secondary/20">
+                &#9654; <!-- Right Arrow -->
+            </button>
         </div>
     </div>
 
-    <div id="product-detail-modal-overlay" class="fixed inset-0 flex items-center justify-center hidden z-50">
-        <div id="product-detail-modal" class="bg-dark-surface rounded-xl shadow-2xl p-6 w-11/12 max-w-3xl styled-scrollbar overflow-y-auto max-h-[90vh] border border-gold-primary/50">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-700">
-                <h3 id="detail-modal-title" class="text-3xl font-serif font-bold text-gold-primary">Product Details</h3>
-                <button id="close-product-detail-btn" class="text-gray-400 hover:text-gold-light transition duration-150">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <div id="product-detail-content" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                <div class="space-y-4">
-                    <img id="detail-main-image" src="" alt="Product Main Image" class="w-full h-96 object-cover rounded-lg shadow-lg border border-gold-primary/30">
-                    
-                    <div id="detail-image-gallery" class="flex space-x-3 pt-2">
-                        </div>
-
-                    <h4 id="detail-name" class="text-3xl font-serif font-extrabold text-gold-light pt-4"></h4>
-                    <p id="detail-price" class="text-4xl font-bold text-gold-primary"></p>
-                    <button id="detail-add-to-cart" class="w-full gold-button font-bold py-3 px-4 rounded-lg text-lg">
-                        Add to Cart
-                    </button>
-                </div>
-                
-                <div class="space-y-6">
-                    <div>
-                        <h5 class="text-xl font-semibold text-gold-light mb-2 border-b border-gray-700 pb-1">Description</h5>
-                        <p id="detail-description" class="text-gray-400 leading-relaxed"></p>
-                    </div>
-                    
-                    <div>
-                        <h5 class="text-xl font-semibold text-gold-light mb-2 border-b border-gray-700 pb-1">Shipping & Delivery</h5>
-                        <ul id="detail-shipping-info" class="text-gray-400 space-y-2">
-                            </ul>
-                    </div>
-                </div>
-            </div>
+    <!-- Game Over Message Box -->
+    <div id="game-over-overlay" class="game-over-overlay">
+        <div class="bg-primary p-8 rounded-xl shadow-2xl border-4 border-red-500 text-white text-center w-80">
+            <h2 class="text-4xl font-black text-red-500 mb-4">CRASHED!</h2>
+            <p class="text-lg mb-4">You hit an obstacle.</p>
+            <p class="text-2xl font-bold mb-6">Final Distance: <span id="final-score" class="text-secondary">0</span>m</p>
+            <button id="restart-button" class="bg-secondary hover:bg-yellow-600 text-primary font-bold py-2 px-6 rounded-full transition duration-150 shadow-lg">
+                Try Again
+            </button>
         </div>
     </div>
+
     <script>
-        // --- Product Data ---
-        // Updated to use an 'images' array for multiple image placeholders
-        const products = [
-            { 
-                id: 1, 
-                name: "UNINUT", 
-                price: 350.00, 
-                images: [
-                    "uninut1.png",
-                    "uninut2.png",
-                    "uninut3.png"
-                ], 
-                description: "Uninut Peanut Butter is a celebration of nature's simple goodness, crafted for true peanut lovers. We meticulously select high-quality, perfectly roasted peanuts, ensuring every jar delivers an authentic, robust flavor. Our unique process grinds them into an irresistibly smooth and creamy spread that melts delightfully on your tongue. With Uninut, you experience the pure essence of peanuts, free from unnecessary additives or artificial ingredients. It's the versatile staple you need, perfect for invigorating breakfasts, satisfying snacks, or inspiring your culinary creations. Beyond its incredible taste, Uninut provides a natural source of protein and healthy fats to fuel your day. Spread it generously on toast, swirl it into smoothies, or enjoy it straight from the spoon for an instant burst of delicious energy. Discover Uninut: where genuine flavor meets everyday perfection." 
-            },
-            { 
-                id: 2, 
-                name: "Puffed Rice", 
-                price: 90.00, 
-                images: [
-                    "rice1.png",
-                    "rice2.png"
-                ], 
-                description: "Discover the light and airy crunch of our premium Puffed Rice (Muri/Murmura), the perfect traditional snack for any time of day. Crafted using an age-old, handmade process, these grains are popped to a delicate crispness, ensuring a superior texture and fresh taste in every bite. This naturally gluten-free snack is incredibly versatile, serving as the essential ingredient for beloved Indian street foods like Bhel Puri and Jhal Muri. Enjoy it simply with a sprinkle of salt or mix it with spices, nuts, and chopped vegetables for a nutritious, low-fat treat. Our commitment is to deliver a consistently high-quality, pure product free from artificial additives or preservatives. Packaged for freshness, this puffed rice retains its signature lightness, making it a delicious and satisfying guilt-free option. Perfect for quick snacks, light breakfasts, or as a crunchy addition to trail mixes." 
-            },
-            { 
-                id: 3, 
-                name: "Shelled Groundnut", 
-                price: 150.00, 
-                images: [
-                    "groundnut1.png",
-                    "groundnut2.png"
-                ], 
-                description: "Sourced from the finest farms, our 1 kg pack of premium shelled groundnuts offers pure, natural goodness perfect for snacking, cooking, or making your own peanut butter. These high-quality, whole kernels are carefully selected for a rich, satisfying crunch and robust flavor. Packed fresh to ensure maximum taste and nutritional value, they are a fantastic source of plant-based protein and healthy fats. Enjoy them raw, roasted, or as a versatile ingredient in your favorite recipes. Elevate your pantry with this essential, wholesome snack." 
-            },
-            { 
-                id: 4, 
-                name: "Cosmic Silk Scarf", 
-                price: 8999.00, 
-                images: [
-                    "https://placehold.co/400x400/282828/D4AF37?text=Scarf+Pattern",
-                    "https://placehold.co/400x400/1C1C1C/FCDA97?text=Scarf+Detail+Shot"
-                ], 
-                description: "Woven with pure celestial silk, featuring a pattern inspired by distant galaxies. Measures 90x90 cm. Dry clean only. A true piece of wearable art, perfect for any season." 
-            },
-            { 
-                id: 5, 
-                name: "Gilded Fountain Pen Set", 
-                price: 29900.00, 
-                images: [
-                    "https://placehold.co/400x400/282828/D4AF37?text=Pen+Main+View",
-                    "https://placehold.co/400x400/1C1C1C/FCDA97?text=Pen+Nib+Detail"
-                ], 
-                description: "Smooth writing instrument with an 18k gold-plated nib, presented in a mahogany box. Includes a piston converter and a bottle of exclusive dark ink. Perfectly balanced for effortless writing." 
-            },
-            { 
-                id: 6, 
-                name: "Aurora Crystal Decanter", 
-                price: 34900.00, 
-                images: [
-                    "https://placehold.co/400x400/282828/D4AF37?text=Decanter+Front",
-                    "https://placehold.co/400x400/1C1C1C/FCDA97?text=Decanter+Base"
-                ], 
-                description: "Hand-blown crystal decanter that refracts light in an array of golden hues. Capacity of 750ml, designed to aerate and preserve the finest spirits. Hand wash recommended." 
-            },
-        ];
+        // Global variables for Three.js
+        let scene, camera, renderer, container;
+        let car, roadMaterial, laneMarkingMaterial, barrierMaterial, buildingMaterial, shoulderMaterial;
+        let roadSegments = [];
+        let obstacles = [];
+        let laneMarkings = []; 
+        let roadsideObjects = []; // Stores the building/barrier groups
+        let clock = new THREE.Clock();
 
-        let cart = [];
+        // Game State Variables
+        let trackSpeed = 0.5; // Current speed, changes dynamically
+        let targetTrackSpeed = 0.5; // Speed the car is aiming for
+        const MIN_SPEED = 0.1;
+        const MAX_SPEED = 1.2; 
+        const ACCEL_RATE = 0.015; 
+        const DECEL_RATE = 0.03; 
+        let score = 0;
+        let isGameOver = false;
+
+        // Player/Car Constants
+        const CAR_WIDTH = 2;
+        const CAR_HEIGHT = 1;
+        const CAR_DEPTH = 3;
+        const ROAD_WIDTH = 20;
+        const ROAD_SEGMENT_LENGTH = 40;
+        const MAX_SEGMENTS = 10; 
         
-        // NEW: Approved Pincodes for delivery
-        const approvedPincodes = ["721429", "721420"];
+        // Recycling limits
+        const Z_DELETE_LIMIT = ROAD_SEGMENT_LENGTH / 2 + 10; 
+        const RECYCLE_DISTANCE = ROAD_SEGMENT_LENGTH * MAX_SEGMENTS; 
 
-        // --- Mock Shipping Data for Modal ---
-        const mockShippingDetails = {
-            standard: "Standard Delivery (5-7 business days): Free",
-            express: "Express Delivery (2-3 business days): 100.00",
-            international: "International Shipping (10-14 business days): Calculated upon inquiry.",
-            returns: "Not Available (comming Soon)"
+        const MAX_STEER_X = 7; 
+        const STEER_FACTOR = 0.5;
+        const MAX_TILT = 0.3; 
+        
+        // Obstacle Movement Constants
+        const OBSTACLE_SWERVE_RANGE = 3; 
+        const OBSTACLE_SWERVE_SPEED = 1.5; 
+        
+        // Lane Marking Constants
+        const LANE_MARKING_COLOR = 0xffffff;
+        const LANE_MARKING_WIDTH = 0.2;
+        const LANE_MARKING_LENGTH = 5;
+        const LANE_MARKING_GAP = 5;
+
+        // Environment Constants (NEW & UPDATED)
+        const SHOULDER_WIDTH = 3; 
+        const BARRIER_WIDTH = 1;
+        // Buildings start outside the road, shoulder, and barrier, plus a gap
+        const BUILDING_CLUSTER_START_X = (ROAD_WIDTH / 2) + SHOULDER_WIDTH + BARRIER_WIDTH + 5; 
+        const BUILDING_MAX_WIDTH = 10;
+        const BUILDING_MAX_HEIGHT = 50;
+
+        // Movement Tracking
+        let horizontalVelocity = 0; 
+        let keys = { 
+            A: false, D: false, ArrowLeft: false, ArrowRight: false,
+            W: false, ArrowUp: false, 
+            S: false, ArrowDown: false 
         };
 
-        // --- DOM Elements ---
-        const productGrid = document.getElementById('product-grid');
-        const cartCount = document.getElementById('cart-count');
-        const cartItemsList = document.getElementById('cart-items-list');
-        const cartTotalDisplay = document.getElementById('cart-total');
-        const cartSummary = document.getElementById('cart-summary');
-        const emptyCartMessage = document.getElementById('empty-cart-message');
-        const cartModalOverlay = document.getElementById('cart-modal-overlay');
-        const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
-        const checkoutTotalDisplay = document.getElementById('checkout-total-display');
-        const orderForm = document.getElementById('order-form');
-        const orderMessage = document.getElementById('order-message');
-        
-        // NEW: Pincode Error Message Element
-        const pincodeErrorMessage = document.getElementById('pincode-error-message'); 
-
-        // New Product Detail Modal Elements (Updated)
-        const productDetailModalOverlay = document.getElementById('product-detail-modal-overlay');
-        const closeProductDetailBtn = document.getElementById('close-product-detail-btn');
-        const detailMainImage = document.getElementById('detail-main-image'); // New ID for the main image
-        const detailImageGallery = document.getElementById('detail-image-gallery'); // New ID for the thumbnail container
-        const detailName = document.getElementById('detail-name');
-        const detailPrice = document.getElementById('detail-price');
-        const detailDescription = document.getElementById('detail-description');
-        const detailShippingInfo = document.getElementById('detail-shipping-info');
-        const detailAddToCartBtn = document.getElementById('detail-add-to-cart');
-
         /**
-         * Helper function to switch the main image in the detail modal.
-         * @param {string} url The URL of the image to display.
+         * Creates a detailed player car model.
          */
-        window.setMainImage = function(url) {
-            detailMainImage.src = url;
+        function createCarModel() {
+            const carGroup = new THREE.Group();
+            const carMaterial = new THREE.MeshLambertMaterial({ color: 0xbe185d }); 
+            const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x111827 }); 
+
+            // Chassis
+            const chassisGeometry = new THREE.BoxGeometry(CAR_WIDTH, 0.7, CAR_DEPTH);
+            const chassis = new THREE.Mesh(chassisGeometry, carMaterial);
+            chassis.position.y = 0.35; 
             
-            // Highlight the currently selected thumbnail
-            const thumbnails = document.querySelectorAll('#detail-image-gallery img');
-            thumbnails.forEach(thumb => {
-                thumb.classList.remove('border-gold-primary');
-                thumb.classList.add('border-gray-700', 'hover:border-gold-light');
-            });
-
-            // Find the image element that matches the URL and highlight it
-            const activeThumb = Array.from(thumbnails).find(thumb => thumb.src === url);
-            if (activeThumb) {
-                activeThumb.classList.remove('border-gray-700', 'hover:border-gold-light');
-                activeThumb.classList.add('border-gold-primary');
-            }
-        }
-
-
-        // --- Core Functions ---
-
-        /**
-         * Renders the product grid on the main page.
-         */
-        function renderProducts() {
-            productGrid.innerHTML = products.map(product => `
-                <div onclick="openProductDetail(${product.id})" class="bg-dark-card p-6 rounded-xl shadow-xl hover:shadow-gold-primary/30 transition duration-300 transform hover:scale-[1.02] border border-gray-800 cursor-pointer">
-                    <img src="${product.images[0]}" alt="${product.name}" class="w-full h-48 object-cover rounded-lg mb-4 border border-gold-primary/20">
-                    <h3 class="text-2xl font-serif font-semibold text-gold-light mb-2">${product.name}</h3>
-                    <p class="text-gray-400 text-sm mb-4 h-12 overflow-hidden">${product.description}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-2xl font-bold text-gold-primary">₹${product.price.toFixed(2)}</span>
-                        <button onclick="event.stopPropagation(); addToCart(${product.id})" class="gold-button font-medium py-2 px-4 rounded-lg text-sm">
-                            Add to Cart
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        /**
-         * Adds a product to the cart or increments its quantity.
-         * @param {number} productId The ID of the product to add.
-         */
-        window.addToCart = function(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-
-            const existingItem = cart.find(item => item.id === productId);
-
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({ ...product, quantity: 1 });
-            }
+            // Cabin
+            const cabinGeometry = new THREE.BoxGeometry(CAR_WIDTH * 0.7, 0.6, CAR_DEPTH * 0.4);
+            const cabin = new THREE.Mesh(cabinGeometry, carMaterial);
+            cabin.position.y = chassis.position.y + 0.3 + 0.3; 
+            cabin.position.z = -0.3; 
             
-            renderCart();
-            openCart();
-        }
+            carGroup.add(chassis);
+            carGroup.add(cabin);
 
-        /**
-         * Updates the quantity of a specific item in the cart.
-         * @param {number} productId The ID of the product to update.
-         * @param {number} delta The change in quantity (-1 or 1).
-         */
-        window.updateCartItemQuantity = function(productId, delta) {
-            const itemIndex = cart.findIndex(item => item.id === productId);
-            if (itemIndex === -1) return;
-
-            const newQuantity = cart[itemIndex].quantity + delta;
+            // Wheels
+            const wheelRadius = 0.5;
+            const wheelThickness = 0.3;
+            const wheelGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelThickness, 8);
             
-            if (newQuantity <= 0) {
-                // Remove item if quantity drops to 0
-                cart.splice(itemIndex, 1);
-            } else {
-                cart[itemIndex].quantity = newQuantity;
-            }
-
-            renderCart();
-        }
-
-        /**
-         * Renders the cart contents and updates the total/count.
-         */
-        function renderCart() {
-            let total = 0;
-            let count = 0;
-
-            cartItemsList.innerHTML = cart.map(item => {
-                const itemTotal = item.price * item.quantity;
-                total += itemTotal;
-                count += item.quantity;
-
-                return `
-                    <div class="flex items-center space-x-4 bg-dark-card p-3 rounded-lg border border-gray-700">
-                        <img src="${item.images[0]}" alt="${item.name}" class="w-12 h-12 object-cover rounded-md">
-                        <div class="flex-grow">
-                            <p class="font-medium text-gold-light">${item.name}</p>
-                            <p class="text-sm text-gray-400">₹${item.price.toFixed(2)} x ${item.quantity}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="updateCartItemQuantity(${item.id}, -1)" class="text-gold-primary hover:text-gold-light transition duration-150 p-1 rounded-full border border-gold-primary/50 w-8 h-8 flex items-center justify-center text-xl font-bold">-</button>
-                            <span class="text-lg font-semibold">${item.quantity}</span>
-                            <button onclick="updateCartItemQuantity(${item.id}, 1)" class="text-gold-primary hover:text-gold-light transition duration-150 p-1 rounded-full border border-gold-primary/50 w-8 h-8 flex items-center justify-center text-xl font-bold">+</button>
-                        </div>
-                        <span class="font-bold text-gold-primary text-lg w-16 text-right">₹${itemTotal.toFixed(2)}</span>
-                    </div>
-                `;
-            }).join('');
-
-            cartTotalDisplay.textContent = `₹${total.toFixed(2)}`;
-            cartCount.textContent = count;
-            checkoutTotalDisplay.textContent = `₹${total.toFixed(2)}`;
-
-            if (cart.length > 0) {
-                cartSummary.classList.remove('hidden');
-                emptyCartMessage.classList.add('hidden');
-            } else {
-                cartSummary.classList.add('hidden');
-                emptyCartMessage.classList.remove('hidden');
-            }
-        }
-
-        function openCart() { cartModalOverlay.style.display = 'flex'; }
-        function closeCart() { cartModalOverlay.style.display = 'none'; }
-
-        function openCheckout() {
-            if (cart.length === 0) return;
-            closeCart();
-            orderMessage.classList.add('hidden');
-            pincodeErrorMessage.classList.add('hidden'); // NEW: Hide pincode error on open
-            orderForm.reset();
-            checkoutModalOverlay.style.display = 'flex';
-        }
-
-        function closeCheckout() { checkoutModalOverlay.style.display = 'none'; }
-
-        /**
-         * Opens the product detail modal with the specified product's data.
-         * @param {number} productId The ID of the product to display.
-         */
-        window.openProductDetail = function(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-
-            // --- 1. Populate Images ---
-            // Set the main image to the first one in the array
-            detailMainImage.src = product.images[0];
-            detailMainImage.alt = product.name + " Main Image";
-
-            // Populate the image gallery/thumbnails
-            detailImageGallery.innerHTML = product.images.map((imageURL, index) => {
-                // Highlight the first thumbnail (which is currently displayed as the main image)
-                const isFirst = index === 0;
-                const borderClass = isFirst ? 'border-gold-primary' : 'border-gray-700 hover:border-gold-light';
-
-                return `
-                    <img 
-                        src="${imageURL}" 
-                        alt="View ${index + 1}" 
-                        onclick="setMainImage('${imageURL}')"
-                        class="w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${borderClass} transition duration-150"
-                    >
-                `;
-            }).join('');
-
-            // --- 2. Populate other content ---
-            detailName.textContent = product.name;
-            detailPrice.textContent = `₹${product.price.toFixed(2)}`;
-            detailDescription.textContent = product.description;
-
-            // Populate shipping details
-            detailShippingInfo.innerHTML = `
-                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.standard}</span></li>
-                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.express}</span></li>
-                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.international}</span></li>
-                <li class="flex items-start"><span class="text-gold-primary mr-2">✓</span><span>${mockShippingDetails.returns}</span></li>
-            `;
-
-            // Re-bind the Add to Cart button to the specific product ID
-            detailAddToCartBtn.onclick = () => {
-                addToCart(product.id);
-                closeProductDetail(); 
+            const createWheel = (x, z) => {
+                const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                wheel.rotation.z = Math.PI / 2; 
+                wheel.position.set(x, wheelRadius, z);
+                return wheel;
             };
 
-            // Show the modal
-            productDetailModalOverlay.style.display = 'flex';
+            const wheelXOffset = CAR_WIDTH / 2 + 0.1;
+            const wheelZOffset = CAR_DEPTH / 2 - 0.5;
+
+            carGroup.add(createWheel(-wheelXOffset, wheelZOffset));
+            carGroup.add(createWheel(wheelXOffset, wheelZOffset));
+            carGroup.add(createWheel(-wheelXOffset, -wheelZOffset));
+            carGroup.add(createWheel(wheelXOffset, -wheelZOffset));
+            
+            carGroup.position.set(0, CAR_HEIGHT / 2, 0);
+
+            return carGroup;
         }
 
         /**
-         * Closes the product detail modal.
+         * Creates a car model for obstacles (Green body, Black wheels).
          */
-        function closeProductDetail() {
-            productDetailModalOverlay.style.display = 'none';
+        function createObstacleCarModel() {
+            const carGroup = new THREE.Group();
+            
+            const obstacleCarColor = new THREE.Color(0x10b981); 
+            const obstacleCarMaterial = new THREE.MeshLambertMaterial({ color: obstacleCarColor });
+            const obstacleWheelMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 }); 
+
+            // Chassis
+            const chassisGeometry = new THREE.BoxGeometry(CAR_WIDTH, 0.7, CAR_DEPTH);
+            const chassis = new THREE.Mesh(chassisGeometry, obstacleCarMaterial);
+            chassis.position.y = 0.35; 
+            
+            // Cabin/Roof
+            const cabinGeometry = new THREE.BoxGeometry(CAR_WIDTH * 0.7, 0.6, CAR_DEPTH * 0.4);
+            const cabin = new THREE.Mesh(cabinGeometry, obstacleCarMaterial);
+            cabin.position.y = chassis.position.y + 0.3 + 0.3;
+            cabin.position.z = -0.3;
+            
+            carGroup.add(chassis);
+            carGroup.add(cabin);
+
+            // Wheels
+            const wheelRadius = 0.5;
+            const wheelThickness = 0.3;
+            const wheelGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelThickness, 8);
+            
+            const createWheel = (x, z) => {
+                const wheel = new THREE.Mesh(wheelGeometry, obstacleWheelMaterial);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(x, wheelRadius, z);
+                return wheel;
+            };
+
+            const wheelXOffset = CAR_WIDTH / 2 + 0.1;
+            const wheelZOffset = CAR_DEPTH / 2 - 0.5;
+
+            carGroup.add(createWheel(-wheelXOffset, wheelZOffset));
+            carGroup.add(createWheel(wheelXOffset, wheelZOffset));
+            carGroup.add(createWheel(-wheelXOffset, -wheelZOffset));
+            carGroup.add(createWheel(wheelXOffset, -wheelZOffset));
+            
+            carGroup.position.set(0, 0, 0);
+
+            return carGroup;
+        }
+        
+        /**
+         * Creates a group of procedural buildings for a segment with window detail.
+         * @param {number} segmentZ The Z coordinate to align the buildings with.
+         * @param {number} side -1 for left side, 1 for right side.
+         * @returns {THREE.Group} Group of building meshes.
+         */
+        function createBuildingCluster(segmentZ, side) {
+            const cluster = new THREE.Group();
+            cluster.position.z = segmentZ;
+            cluster.position.y = 0; 
+
+            const startX = BUILDING_CLUSTER_START_X * side;
+            let currentX = startX;
+            
+            // Material for simulating lit windows
+            const windowColor = new THREE.Color(0x5dade2); 
+            const windowMaterial = new THREE.MeshBasicMaterial({ color: windowColor, transparent: true, opacity: 0.8 });
+
+            while (Math.abs(currentX) < 80) { // Extend range for a larger city feel
+                if (Math.random() < 0.6) { // 60% chance to place a building
+                    const width = 8 + Math.random() * BUILDING_MAX_WIDTH;
+                    const depth = 8 + Math.random() * 10;
+                    const height = 15 + Math.random() * BUILDING_MAX_HEIGHT;
+
+                    const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                    const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                    
+                    // Position X relative to the center of the road
+                    const x = currentX + (width / 2) * side;
+                    
+                    // Apply scale variation and set position
+                    building.scale.y = 0.8 + Math.random() * 0.4; // 80% to 120% height
+                    building.position.set(x, (height * building.scale.y) / 2, 0);
+
+                    // Slightly rotate the cluster for perspective
+                    building.rotation.y = (Math.random() - 0.5) * 0.1;
+                    
+                    cluster.add(building);
+
+                    // --- Procedural Window Stripes (Realism) ---
+                    const stripeWidth = 0.5;
+                    const stripeGap = 5;
+
+                    // Vertical Stripes (on the front face)
+                    for (let i = -width/2 + stripeGap/2; i < width/2; i += stripeGap) {
+                        if (Math.random() < 0.7) { 
+                            const vStripeFront = new THREE.Mesh(new THREE.PlaneGeometry(stripeWidth, height * building.scale.y), windowMaterial);
+                            // Position in front of the building face by a tiny amount
+                            vStripeFront.position.set(i + building.position.x, building.position.y, building.position.z + depth / 2 + 0.05);
+                            cluster.add(vStripeFront);
+                        }
+                    }
+
+                    // Horizontal Stripes (on the front face)
+                    const hStripeHeight = 0.5;
+                    for (let i = 5; i < height * building.scale.y - 5; i += stripeGap) {
+                        if (Math.random() < 0.4) { 
+                            const hStripeFront = new THREE.Mesh(new THREE.PlaneGeometry(width, hStripeHeight), windowMaterial);
+                            hStripeFront.position.set(building.position.x, i, building.position.z + depth / 2 + 0.05);
+                            cluster.add(hStripeFront);
+                        }
+                    }
+                    // --- End Window Stripes ---
+
+
+                    // Move to the next potential placement spot
+                    currentX += (width + 5 + Math.random() * 10) * side;
+                } else {
+                    // Add a larger gap
+                    currentX += 15 * side;
+                }
+            }
+
+            return cluster;
+        }
+
+        /**
+         * Creates the detailed road side elements (shoulder, barriers, and distant buildings) for a segment.
+         */
+        function createRoadsideElements(segmentZ) {
+            const group = new THREE.Group();
+            group.position.z = segmentZ;
+            
+            const roadEdge = ROAD_WIDTH / 2;
+
+            // 1. Roadside Shoulder/Sidewalk (NEW)
+            const shoulderGeometry = new THREE.PlaneGeometry(SHOULDER_WIDTH, ROAD_SEGMENT_LENGTH);
+            
+            // Left Shoulder
+            const leftShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
+            leftShoulder.rotation.x = -Math.PI / 2;
+            // Positioned outside the road edge
+            leftShoulder.position.set(-(roadEdge + SHOULDER_WIDTH / 2), 0.005, 0); 
+            group.add(leftShoulder);
+
+            // Right Shoulder
+            const rightShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
+            rightShoulder.rotation.x = -Math.PI / 2;
+            rightShoulder.position.set((roadEdge + SHOULDER_WIDTH / 2), 0.005, 0);
+            group.add(rightShoulder);
+            
+            // 2. Roadside Barriers
+            const barrierHeight = 5;
+            const barrierDepth = ROAD_SEGMENT_LENGTH;
+            const barrierGeometry = new THREE.BoxGeometry(BARRIER_WIDTH, barrierHeight, barrierDepth);
+            
+            // Left Barrier
+            const leftBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
+            // Positioned just outside the shoulder
+            leftBarrier.position.set(-(roadEdge + SHOULDER_WIDTH + BARRIER_WIDTH / 2), barrierHeight / 2, 0);
+            group.add(leftBarrier);
+
+            // Right Barrier
+            const rightBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
+            rightBarrier.position.set((roadEdge + SHOULDER_WIDTH + BARRIER_WIDTH / 2), barrierHeight / 2, 0);
+            group.add(rightBarrier);
+
+            // 3. Distant Buildings (Left and Right Clusters)
+            const leftCluster = createBuildingCluster(0, -1);
+            const rightCluster = createBuildingCluster(0, 1);
+            
+            group.add(leftCluster);
+            group.add(rightCluster);
+
+            scene.add(group);
+            roadsideObjects.push(group);
+        }
+        
+        /**
+         * Creates and manages dashed lane markings.
+         */
+        function createLaneMarkings() {
+            if (laneMarkings.length > 0) {
+                laneMarkings.forEach(m => scene.remove(m));
+                laneMarkings = [];
+            }
+            
+            const dashUnitLength = LANE_MARKING_LENGTH + LANE_MARKING_GAP;
+            
+            for (let s = 0; s < roadSegments.length; s++) {
+                const segmentCenterZ = roadSegments[s].position.z;
+                const segmentStartZ = segmentCenterZ - ROAD_SEGMENT_LENGTH / 2; 
+                const totalMarkingUnits = Math.floor(ROAD_SEGMENT_LENGTH / dashUnitLength);
+
+                for (let i = 0; i < totalMarkingUnits; i++) {
+                    const markingGeometry = new THREE.BoxGeometry(LANE_MARKING_WIDTH, 0.01, LANE_MARKING_LENGTH);
+                    const marking = new THREE.Mesh(markingGeometry, laneMarkingMaterial);
+                    
+                    const zPos = segmentStartZ + (i * dashUnitLength) + (LANE_MARKING_LENGTH / 2);
+                    
+                    marking.position.set(0, 0.01, zPos); 
+                    
+                    scene.add(marking);
+                    laneMarkings.push(marking);
+                }
+            }
+        }
+
+        /**
+         * Initializes the Three.js scene, camera, and renderer.
+         */
+        function init() {
+            // Reset game state and speed
+            score = 0;
+            isGameOver = false;
+            trackSpeed = 0.5; 
+            targetTrackSpeed = 0.5;
+            document.getElementById('game-score').textContent = score;
+            document.getElementById('game-over-overlay').style.display = 'none';
+
+            // Clean up existing scene elements if restarting
+            if (scene) {
+                scene.children.forEach(child => scene.remove(child));
+                roadSegments = [];
+                obstacles = [];
+                laneMarkings = []; 
+                roadsideObjects = []; 
+            } else {
+                container = document.getElementById('scene-container');
+            }
+
+            // 1. Scene Setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x111827, 40, 150); 
+            scene.background = new THREE.Color(0x111827);
+
+            // 2. Camera Setup
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+            camera.lookAt(0, 0, 0);
+
+            // 3. Renderer Setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            if (container.children.length > 0) {
+                container.removeChild(container.children[0]);
+            }
+            container.appendChild(renderer.domElement);
+            
+            // 4. Materials 
+            roadMaterial = new THREE.MeshLambertMaterial({ color: 0x1e272e }); 
+            laneMarkingMaterial = new THREE.MeshBasicMaterial({ color: LANE_MARKING_COLOR }); 
+            barrierMaterial = new THREE.MeshLambertMaterial({ color: 0x2c3e50 }); 
+            buildingMaterial = new THREE.MeshLambertMaterial({ color: 0x1c2833 }); 
+            shoulderMaterial = new THREE.MeshLambertMaterial({ color: 0x2f3640 }); // Defined new shoulder material
+
+            // 5. Lights 
+            const ambientLight = new THREE.AmbientLight(0x404040, 3);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+            directionalLight.position.set(0, 10, 10); 
+            scene.add(directionalLight);
+
+            // 6. Player Car
+            car = createCarModel();
+            car.position.set(0, 0, 0); 
+            scene.add(car);
+
+            // 7. Track Generation
+            generateInitialTrack();
+            createLaneMarkings();
+
+            // 8. Event Listeners (Unchanged, remains for controls)
+            if (!window.listenersAttached) {
+                window.addEventListener('resize', onWindowResize);
+                document.addEventListener('keydown', onKeyDown);
+                document.addEventListener('keyup', onKeyUp);
+                document.getElementById('restart-button').addEventListener('click', restartGame);
+                
+                const leftButton = document.getElementById('left-button');
+                const rightButton = document.getElementById('right-button');
+                const accelerateButton = document.getElementById('accelerate-button');
+                const brakeButton = document.getElementById('brake-button');
+
+                const handleStart = (key) => (event) => {
+                    event.preventDefault(); 
+                    keys[key] = true;
+                };
+
+                const handleEnd = (key) => () => {
+                    keys[key] = false;
+                };
+
+                leftButton.addEventListener('touchstart', handleStart('ArrowLeft'));
+                leftButton.addEventListener('touchend', handleEnd('ArrowLeft'));
+                leftButton.addEventListener('mousedown', handleStart('ArrowLeft'));
+                leftButton.addEventListener('mouseup', handleEnd('ArrowLeft'));
+
+                rightButton.addEventListener('touchstart', handleStart('ArrowRight'));
+                rightButton.addEventListener('touchend', handleEnd('ArrowRight'));
+                rightButton.addEventListener('mousedown', handleStart('ArrowRight'));
+                rightButton.addEventListener('mouseup', handleEnd('ArrowRight'));
+
+                accelerateButton.addEventListener('touchstart', handleStart('W'));
+                accelerateButton.addEventListener('touchend', handleEnd('W'));
+                accelerateButton.addEventListener('mousedown', handleStart('W'));
+                accelerateButton.addEventListener('mouseup', handleEnd('W'));
+
+                brakeButton.addEventListener('touchstart', handleStart('S'));
+                brakeButton.addEventListener('touchend', handleEnd('S'));
+                brakeButton.addEventListener('mousedown', handleStart('S'));
+                brakeButton.addEventListener('mouseup', handleEnd('S'));
+                
+                document.getElementById('touch-controls').addEventListener('touchmove', (e) => e.preventDefault());
+
+                window.listenersAttached = true;
+            }
+            
+            clock.start();
+        }
+
+        /**
+         * Generates the initial segments of the road, obstacles, and buildings.
+         */
+        function generateInitialTrack() {
+            for (let i = 0; i < MAX_SEGMENTS; i++) {
+                const centerZ = -(ROAD_SEGMENT_LENGTH / 2) - i * ROAD_SEGMENT_LENGTH;
+                
+                // Road Segment (Recycling logic ensures we don't recreate meshes unnecessarily)
+                let roadMesh;
+                if (roadSegments[i]) {
+                    roadMesh = roadSegments[i];
+                } else {
+                    const roadGeometry = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_SEGMENT_LENGTH);
+                    roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
+                    roadSegments.push(roadMesh);
+                    scene.add(roadMesh);
+                }
+                
+                roadMesh.rotation.x = -Math.PI / 2;
+                roadMesh.position.set(0, 0, centerZ);
+                
+                // Roadside Elements (Shoulder, Barriers, Buildings)
+                createRoadsideElements(centerZ);
+                
+                // Obstacle Spawn
+                if (i < 7 && Math.random() < 0.6) { 
+                    spawnObstacle(centerZ);
+                }
+            }
+        }
+
+        /**
+         * Spawns a new obstacle car at a given Z position.
+         */
+        function spawnObstacle(zPosition) {
+            const obstacle = createObstacleCarModel(); 
+            const spawnRange = MAX_STEER_X - OBSTACLE_SWERVE_RANGE - (CAR_WIDTH / 2);
+            const initialX = (Math.random() - 0.5) * spawnRange * 2;
+            
+            obstacle.position.set(initialX, 0, zPosition);
+            obstacle.rotation.y = (Math.random() - 0.5) * 0.2; 
+            
+            obstacle.userData.swervePhase = Math.random() * Math.PI * 2; 
+            obstacle.userData.initialX = initialX; 
+            
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
+        
+        /**
+         * Updates the horizontal position of obstacles to make them swerve.
+         */
+        function updateObstacleMovement() {
+            const time = clock.getElapsedTime(); 
+
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                const { swervePhase, initialX } = obstacle.userData;
+
+                const swerveAmount = Math.sin(time * OBSTACLE_SWERVE_SPEED + swervePhase) * OBSTACLE_SWERVE_RANGE;
+
+                let newX = initialX + swerveAmount;
+                const maxBoundary = MAX_STEER_X - (CAR_WIDTH / 2); 
+                
+                newX = Math.max(-maxBoundary, Math.min(newX, maxBoundary));
+
+                obstacle.position.x = newX;
+            }
+        }
+
+        /**
+         * Updates the speed based on W/S or ArrowUp/ArrowDown keys.
+         */
+        function updateSpeed(delta) {
+            if (keys['W'] || keys['ArrowUp']) {
+                targetTrackSpeed += ACCEL_RATE * delta * 60; 
+            } else if (keys['S'] || keys['ArrowDown']) {
+                targetTrackSpeed -= DECEL_RATE * delta * 60; 
+            } else {
+                if (targetTrackSpeed > MIN_SPEED) {
+                    targetTrackSpeed -= 0.005; 
+                }
+            }
+
+            targetTrackSpeed = Math.max(MIN_SPEED, Math.min(targetTrackSpeed, MAX_SPEED));
+            trackSpeed += (targetTrackSpeed - trackSpeed) * 0.05;
+            trackSpeed = Math.max(MIN_SPEED, Math.min(trackSpeed, MAX_SPEED));
         }
 
 
-        // --- Event Listeners ---
-        document.getElementById('open-cart-btn').addEventListener('click', openCart);
-        document.getElementById('close-cart-btn').addEventListener('click', closeCart);
-        document.getElementById('open-checkout-btn').addEventListener('click', openCheckout);
-        document.getElementById('close-checkout-btn').addEventListener('click', closeCheckout);
-        closeProductDetailBtn.addEventListener('click', closeProductDetail);
-        
-        // Handle form submission (Manual Order Process)
-        orderForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            // Hide previous messages
-            orderMessage.classList.add('hidden');
-            pincodeErrorMessage.classList.add('hidden'); // NEW: Hide error message before validation
+        /**
+         * Updates the position of the road, buildings, and obstacles to simulate forward movement.
+         */
+        function updateWorldMovement(delta) {
+            const moveDistance = trackSpeed * delta * 60; 
 
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-            const pincode = document.getElementById('pincode').value.trim(); // NEW: Get pincode value
-            
-            // --- NEW: Pincode Validation Logic ---
-            if (!approvedPincodes.includes(pincode)) {
-                pincodeErrorMessage.classList.remove('hidden'); // Show error message
-                return; // Stop form submission
+            // 1. Move Road Segments and check for recycling
+            for (let i = 0; i < roadSegments.length; i++) {
+                const segment = roadSegments[i];
+                segment.position.z += moveDistance;
+
+                if (segment.position.z > Z_DELETE_LIMIT) {
+                    segment.position.z -= RECYCLE_DISTANCE; 
+                    if (Math.random() < 0.6) { 
+                        spawnObstacle(segment.position.z);
+                    }
+                }
             }
-            // --- END NEW VALIDATION ---
+            
+            // 2. Move Roadside Objects (Shoulders, Barriers, and Buildings)
+            for (let i = roadsideObjects.length - 1; i >= 0; i--) {
+                const roadsideGroup = roadsideObjects[i];
+                roadsideGroup.position.z += moveDistance;
 
-            // 1. Prepare Order Details (This is what you would receive)
-            const orderDetails = {
-                customer: { name, email, phone, pincode }, // NEW: Include pincode
-                items: cart.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: item.price,
-                    total: `₹${(item.price * item.quantity).toFixed(2)}` 
-                })),
-                total: `₹${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}`,
-                payment_mode: "Manual/Contact Required",
-            };
+                if (roadsideGroup.position.z > Z_DELETE_LIMIT) {
+                    // Recycle roadside group position
+                    roadsideGroup.position.z -= RECYCLE_DISTANCE;
+                    
+                    // Clear and regenerate the building clusters to create a new environment look
+                    // Find the two THREE.Groups that contain the buildings and remove them
+                    const oldClusters = roadsideGroup.children.filter(c => c.type === 'Group');
+                    
+                    oldClusters.forEach(cluster => {
+                        roadsideGroup.remove(cluster);
+                        cluster.children.forEach(child => child.geometry.dispose()); // Clean up geometry
+                    });
 
-            console.log("--- ORDER SUBMITTED (MANUAL PROCESS) ---");
-            console.log(orderDetails);
-            console.log("-----------------------------------------");
+                    // Regenerate new building clusters
+                    const newLeft = createBuildingCluster(0, -1);
+                    const newRight = createBuildingCluster(0, 1);
+                    roadsideGroup.add(newLeft);
+                    roadsideGroup.add(newRight);
+                }
+            }
+            
+            // 3. Move Lane Markings
+            for (let i = 0; i < laneMarkings.length; i++) {
+                const marking = laneMarkings[i];
+                marking.position.z += moveDistance;
 
-            // 2. Clear Cart and Show Success Message
-            cart = [];
-            renderCart();
-            orderForm.reset();
-            orderMessage.classList.remove('hidden');
+                if (marking.position.z > Z_DELETE_LIMIT) {
+                    marking.position.z -= RECYCLE_DISTANCE; 
+                }
+            }
 
-            // Optionally, auto-close the modal after a delay
-            setTimeout(() => {
-                closeCheckout();
-            }, 3000); 
-        });
+            // 4. Move Obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                obstacle.position.z += moveDistance;
 
+                if (obstacle.position.z > Z_DELETE_LIMIT) {
+                    scene.remove(obstacle);
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
 
-        // --- Initialization ---
-        window.onload = () => {
-            renderProducts();
-            renderCart(); // Initialize cart view
+        /**
+         * Checks for collision between the car and any obstacles.
+         */
+        function checkCollisions() {
+            const carCollisionBox = new THREE.Box3().setFromCenterAndSize(
+                car.position,
+                new THREE.Vector3(CAR_WIDTH, CAR_HEIGHT, CAR_DEPTH)
+            );
+            
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                const obstacleBox = new THREE.Box3().setFromObject(obstacle);
+
+                if (carCollisionBox.intersectsBox(obstacleBox)) {
+                    endGame();
+                    break;
+                }
+            }
+        }
+        
+        /**
+         * Handles the Game Over state.
+         */
+        function endGame() {
+            isGameOver = true;
+            document.getElementById('final-score').textContent = Math.floor(score * 10);
+            document.getElementById('game-over-overlay').style.display = 'grid';
+            clock.stop();
+        }
+        
+        /**
+         * Restarts the game.
+         */
+        function restartGame() {
+            init();
+            animate(); 
+        }
+
+        /**
+         * Handles the window resize event.
+         */
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        /**
+         * Handles key down events for steering and speed.
+         */
+        function onKeyDown(event) {
+            const key = event.key;
+            if (keys.hasOwnProperty(key)) {
+                keys[key] = true;
+                event.preventDefault(); 
+            }
+        }
+
+        /**
+         * Handles key up events for steering and speed.
+         */
+        function onKeyUp(event) {
+            const key = event.key;
+            if (keys.hasOwnProperty(key)) {
+                keys[key] = false;
+            }
+        }
+        
+        /**
+         * Updates the car's horizontal position and rotation based on key input.
+         */
+        function updateCarSteering(delta) {
+            horizontalVelocity = 0;
+            if (keys['A'] || keys['ArrowLeft']) {
+                horizontalVelocity = -1;
+            } else if (keys['D'] || keys['ArrowRight']) {
+                horizontalVelocity = 1;
+            }
+
+            if (horizontalVelocity !== 0) {
+                const steerMultiplier = 0.5 + (trackSpeed / MAX_SPEED) * 0.5; 
+                car.position.x += horizontalVelocity * STEER_FACTOR * steerMultiplier * delta * 60;
+                
+                car.position.x = Math.max(-MAX_STEER_X, Math.min(car.position.x, MAX_STEER_X));
+            }
+            
+            const targetTilt = horizontalVelocity * -MAX_TILT; 
+            car.rotation.z += (targetTilt - car.rotation.z) * 0.1;
+
+            camera.position.x = car.position.x;
+        }
+
+        /**
+         * The main animation loop.
+         */
+        function animate() {
+            if (isGameOver) {
+                renderer.render(scene, camera);
+                return; 
+            }
+
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta(); 
+
+            // 1. Update Player Input/Movement
+            updateCarSteering(delta);
+            updateSpeed(delta); 
+
+            // 2. Update Game State
+            score += trackSpeed * delta; 
+            document.getElementById('game-score').textContent = Math.floor(score * 10); 
+
+            // 3. Dynamic Obstacle Movement 
+            updateObstacleMovement();
+
+            // 4. World Movement (Road, Buildings, etc.)
+            updateWorldMovement(delta);
+
+            // 5. Check for Collisions
+            checkCollisions();
+
+            // 6. Render the Scene
+            renderer.render(scene, camera);
+        }
+
+        // Start the application
+        window.onload = function () {
+            init();
+            animate();
         };
+
     </script>
 </body>
 </html>
