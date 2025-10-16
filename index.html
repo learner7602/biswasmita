@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Urban Highway Racer (Detailed Car)</title>
+    <title>3D Urban Highway Racer (Detailed Car & Environment)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -111,11 +111,21 @@
 
     <div id="game-over-overlay" class="game-over-overlay">
         <div class="bg-primary p-8 rounded-xl shadow-2xl border-4 border-red-500 text-white text-center w-80">
-            <h2 class="text-4xl font-black text-red-500 mb-4">CRASHED!</h2>
-            <p class="text-lg mb-4">You hit an obstacle.</p>
+            <h2 class="text-4xl font-black text-red-500 mb-4">Biswajit huged you</h2>
+            <p class="text-lg mb-4">Biswajit loves you</p>
             <p class="text-2xl font-bold mb-6">Final Distance: <span id="final-score" class="text-secondary">0</span>m</p>
             <button id="restart-button" class="bg-secondary hover:bg-yellow-600 text-primary font-bold py-2 px-6 rounded-full transition duration-150 shadow-lg">
                 Try Again
+            </button>
+        </div>
+    </div>
+    
+    <div id="start-overlay" class="game-over-overlay" style="display: grid;">
+        <div class="bg-primary p-12 rounded-xl shadow-2xl border-4 border-secondary text-white text-center w-96">
+            <h2 class="text-5xl font-black text-secondary mb-4">URBAN RACER</h2>
+            <p class="text-xl mb-8 text-gray-300">Dodge traffic and push your speed to the limit!</p>
+            <button id="start-button" class="bg-secondary hover:bg-yellow-600 text-primary font-bold py-3 px-8 rounded-full transition duration-150 shadow-lg text-lg">
+                START GAME
             </button>
         </div>
     </div>
@@ -123,7 +133,8 @@
     <script>
         // Global variables for Three.js
         let scene, camera, renderer, container;
-        let car, roadMaterial, laneMarkingMaterial, barrierMaterial, buildingMaterial, shoulderMaterial, treeTrunkMaterial, treeLeavesMaterial, streetLightPoleMaterial, streetLightHeadMaterial, signPostMaterial, signBoardMaterial;
+        let car, roadMaterial, laneMarkingMaterial, barrierMaterial, shoulderMaterial, treeTrunkMaterial, treeLeavesMaterial, streetLightPoleMaterial, streetLightHeadMaterial, signPostMaterial, signBoardMaterial;
+        let carSpotLight, carSpotLightTarget; 
         let roadSegments = [];
         let obstacles = [];
         let laneMarkings = []; 
@@ -131,14 +142,17 @@
         let clock = new THREE.Clock();
 
         // Game State Variables
-        let trackSpeed = 0.5; 
-        let targetTrackSpeed = 0.5; 
-        const MIN_SPEED = 0.1;
+        let trackSpeed = 0.0; 
+        let targetTrackSpeed = 0.0; 
+        
+        // MIN_SPEED is now set to 0.5 to act as the constant "mid speed" for the environment scrolling.
+        const MIN_SPEED = 0.5;
         const MAX_SPEED = 1.2; 
         const ACCEL_RATE = 0.015; 
         const DECEL_RATE = 0.03; 
         let score = 0;
         let isGameOver = false;
+        let isGameStarted = false; 
 
         // Player/Car Constants (Used for collision box)
         const CAR_WIDTH = 2;
@@ -155,10 +169,6 @@
         const MAX_STEER_X = 7; 
         const STEER_FACTOR = 0.5;
         const MAX_TILT = 0.3; 
-        
-        // Obstacle Movement Constants
-        const OBSTACLE_SWERVE_RANGE = 3; 
-        const OBSTACLE_SWERVE_SPEED = 1.5; 
         
         // Lane Marking Constants
         const LANE_MARKING_COLOR = 0xffffff;
@@ -186,6 +196,43 @@
         let obstacleCarTemplate;
         
         /**
+         * Creates a 3D sprite with text always facing the camera.
+         * @param {string} text - The text to display.
+         * @param {string} color - The CSS color string (e.g., "white", "red").
+         * @param {number} fontSize - Font size in pixels.
+         * @returns {THREE.Sprite} The created Sprite object.
+         */
+        function createTextSprite(text, color, fontSize = 60) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            context.font = `Bold ${fontSize}px Arial`;
+            const metrics = context.measureText(text);
+            const textWidth = metrics.width;
+            
+            canvas.width = textWidth + 20; // Add padding
+            canvas.height = fontSize + 20;
+            
+            context.font = `Bold ${fontSize}px Arial`;
+            context.fillStyle = color;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, canvas.width / 2, canvas.height / 2);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            
+            // Scale the sprite so it's a visible size in the 3D world
+            const aspectRatio = canvas.height / canvas.width;
+            const width = 5; 
+            sprite.scale.set(width, width * aspectRatio, 1);
+            
+            return sprite;
+        }
+
+        /**
          * Creates a highly detailed, realistic car model using Three.js primitives and PBR materials.
          * @param {number} color - The hexadecimal color for the car's body.
          * @param {boolean} isObstacle - Whether the car is an obstacle (affects lighting/emissive).
@@ -198,18 +245,18 @@
             const bodyColor = new THREE.Color(color);
             const bodyMaterial = new THREE.MeshStandardMaterial({
                 color: bodyColor,
-                metalness: 0.9, // Very metallic
-                roughness: 0.4, // Glossy finish
-                emissive: isObstacle ? bodyColor.clone().multiplyScalar(0.1) : 0x000000 // Subtle glow for obstacles
+                metalness: 0.9, 
+                roughness: 0.4, 
+                emissive: isObstacle ? bodyColor.clone().multiplyScalar(0.1) : 0x000000
             });
 
             const windowMaterial = new THREE.MeshPhysicalMaterial({
                 color: 0x5dade2,
                 metalness: 0.1,
-                roughness: 0, // Very smooth
-                transmission: 0.9, // Highly transparent
+                roughness: 0, 
+                transmission: 0.9, 
                 thickness: 0.5,
-                opacity: 0.8 // See-through
+                opacity: 0.8
             });
             
             const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.5, roughness: 0.8 });
@@ -234,20 +281,20 @@
             cabin.position.set(0, 0.8 + cabinHeight / 2, -CAR_DEPTH * 0.1); 
             carGroup.add(cabin);
 
-            // 3. Windows (using separate meshes for better glass effect)
+            // 3. Windows 
             const windowGeom = new THREE.BoxGeometry(cabinWidth * 0.9, cabinHeight * 0.8, cabinDepth * 0.8);
             const windows = new THREE.Mesh(windowGeom, windowMaterial);
             windows.position.copy(cabin.position);
             carGroup.add(windows);
             
-            // 4. Wheels (Cylinder for tire, Torus for rim)
+            // 4. Wheels 
             const wheelRadius = 0.4;
             const wheelThickness = 0.3;
             const wheelPositions = [
-                { x: CAR_WIDTH / 2, z: CAR_DEPTH * 0.35 },  // Front Right
-                { x: -CAR_WIDTH / 2, z: CAR_DEPTH * 0.35 }, // Front Left
-                { x: CAR_WIDTH / 2, z: -CAR_DEPTH * 0.35 }, // Back Right
-                { x: -CAR_WIDTH / 2, z: -CAR_DEPTH * 0.35 }  // Back Left
+                { x: CAR_WIDTH / 2, z: CAR_DEPTH * 0.35 }, 
+                { x: -CAR_WIDTH / 2, z: CAR_DEPTH * 0.35 },
+                { x: CAR_WIDTH / 2, z: -CAR_DEPTH * 0.35 },
+                { x: -CAR_WIDTH / 2, z: -CAR_DEPTH * 0.35 }
             ];
 
             const tireGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelThickness, 16);
@@ -266,7 +313,7 @@
                 carGroup.add(tire);
             });
             
-            // 5. Headlights (Front of the chassis)
+            // 5. Headlights 
             const headlight = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), headlightMaterial);
             headlight.position.set(CAR_WIDTH / 2 - 0.2, 0.7, CAR_DEPTH / 2 - 0.05); 
             carGroup.add(headlight);
@@ -275,7 +322,7 @@
             headlight2.position.x *= -1;
             carGroup.add(headlight2);
             
-            // 6. Taillights (Back of the chassis)
+            // 6. Taillights 
             const taillight = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), taillightMaterial);
             taillight.position.set(CAR_WIDTH / 2 - 0.2, 0.7, -CAR_DEPTH / 2 + 0.05);
             taillight.rotation.y = Math.PI; 
@@ -285,10 +332,8 @@
             taillight2.position.x *= -1;
             carGroup.add(taillight2);
 
-            // Set the car's pivot point to the bottom center (Y=0)
             carGroup.position.y = 0; 
 
-            // Ensure all car parts cast a shadow
             carGroup.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
@@ -303,8 +348,15 @@
          */
         function createDetailedBuilding(width, height, depth) {
             const buildingGroup = new THREE.Group();
+            
+            const detailedBuildingMaterial = new THREE.MeshStandardMaterial({ 
+                color: new THREE.Color(0x1a2128).multiplyScalar(0.9 + Math.random() * 0.2), 
+                roughness: 0.8, 
+                metalness: 0.1 
+            });
+
             const baseBuildingGeometry = new THREE.BoxGeometry(width, height, depth);
-            const baseBuilding = new THREE.Mesh(baseBuildingGeometry, buildingMaterial);
+            const baseBuilding = new THREE.Mesh(baseBuildingGeometry, detailedBuildingMaterial);
             baseBuilding.position.y = height / 2; 
             buildingGroup.add(baseBuilding);
 
@@ -318,12 +370,12 @@
 
                 if (Math.random() < 0.5) { 
                     const setbackGeometry = new THREE.BoxGeometry(detailWidth, detailHeight, detailDepth);
-                    const setback = new THREE.Mesh(setbackGeometry, buildingMaterial);
+                    const setback = new THREE.Mesh(setbackGeometry, detailedBuildingMaterial);
                     setback.position.set(0, height + detailHeight / 2, depth / 2 - detailDepth / 2 - 0.05); 
                     buildingGroup.add(setback);
                 } else { 
                     const protrusionGeometry = new THREE.BoxGeometry(detailWidth, detailHeight, detailDepth);
-                    const protrusion = new THREE.Mesh(protrusionGeometry, buildingMaterial);
+                    const protrusion = new THREE.Mesh(protrusionGeometry, detailedBuildingMaterial);
                     protrusion.position.set(0, height * 0.5 + detailHeight / 2, depth / 2 + detailDepth / 2 + 0.05); 
                     buildingGroup.add(protrusion);
                 }
@@ -346,6 +398,14 @@
                     }
                 }
             }
+            
+            buildingGroup.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
             return buildingGroup;
         }
 
@@ -404,6 +464,9 @@
             leaves.position.y = trunkHeight + leavesHeight / 2 - 1; 
             treeGroup.add(leaves);
 
+            treeGroup.traverse((child) => {
+                if (child.isMesh) child.castShadow = true;
+            });
             return treeGroup;
         }
         
@@ -435,6 +498,10 @@
             const lightGlow = new THREE.PointLight(0xfdd835, 1, 15); 
             lightGlow.position.set(armLength, poleHeight - 0.5, 0);
             lightGroup.add(lightGlow);
+            
+            lightGroup.traverse((child) => {
+                if (child.isMesh) child.castShadow = true;
+            });
 
             return lightGroup;
         }
@@ -457,6 +524,10 @@
             const board = new THREE.Mesh(boardGeometry, signBoardMaterial);
             board.position.set(0, postHeight - boardSize / 2, 0.1); 
             signGroup.add(board);
+            
+            signGroup.traverse((child) => {
+                if (child.isMesh) child.castShadow = true;
+            });
 
             return signGroup;
         }
@@ -475,7 +546,7 @@
             const shoulderGeometry = new THREE.PlaneGeometry(SHOULDER_WIDTH, ROAD_SEGMENT_LENGTH);
             const shoulderColor1 = new THREE.Color(0x2f3640);
             const shoulderColor2 = new THREE.Color(0x38414a);
-            shoulderMaterial = new THREE.MeshLambertMaterial({ vertexColors: true }); 
+            shoulderMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.1 }); 
 
             const colors = [];
             const color = new THREE.Color();
@@ -490,11 +561,13 @@
             const leftShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
             leftShoulder.rotation.x = -Math.PI / 2;
             leftShoulder.position.set(-(roadEdge + SHOULDER_WIDTH / 2), 0.005, 0); 
+            leftShoulder.receiveShadow = true;
             group.add(leftShoulder);
 
             const rightShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
             rightShoulder.rotation.x = -Math.PI / 2;
             rightShoulder.position.set((roadEdge + SHOULDER_WIDTH / 2), 0.005, 0);
+            rightShoulder.receiveShadow = true;
             group.add(rightShoulder);
             
             // 2. Roadside Barriers
@@ -504,10 +577,12 @@
             
             const leftBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
             leftBarrier.position.set(-(roadEdge + SHOULDER_WIDTH + BARRIER_WIDTH / 2), barrierHeight / 2, 0);
+            leftBarrier.castShadow = true;
             group.add(leftBarrier);
 
             const rightBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
             rightBarrier.position.set((roadEdge + SHOULDER_WIDTH + BARRIER_WIDTH / 2), barrierHeight / 2, 0);
+            rightBarrier.castShadow = true;
             group.add(rightBarrier);
 
             // 3. Roadside Props (Trees, Street Lights, Signs)
@@ -585,11 +660,28 @@
                     const zPos = segmentStartZ + (i * dashUnitLength) + (LANE_MARKING_LENGTH / 2);
                     
                     marking.position.set(0, 0.01, zPos); 
+                    marking.receiveShadow = true;
                     
                     scene.add(marking);
                     laneMarkings.push(marking);
                 }
             }
+        }
+        
+        /**
+         * Starts the game when the user clicks the start button.
+         */
+        function startGame() {
+            document.getElementById('start-overlay').style.display = 'none';
+            isGameStarted = true;
+            trackSpeed = MIN_SPEED; 
+            targetTrackSpeed = MIN_SPEED; 
+            
+            generateInitialTrack();
+            createLaneMarkings();
+            
+            clock.start();
+            animate(); 
         }
 
         /**
@@ -606,15 +698,16 @@
             // Reset game state and speed
             score = 0;
             isGameOver = false;
-            trackSpeed = 0.5; 
-            targetTrackSpeed = 0.5;
+            isGameStarted = false; 
+            trackSpeed = 0.0; 
+            targetTrackSpeed = 0.0;
             document.getElementById('game-score').textContent = score;
             document.getElementById('game-over-overlay').style.display = 'none';
+            document.getElementById('start-overlay').style.display = 'grid'; 
 
             // Clean up existing scene elements if restarting
             if (scene) {
                 const objectsToRemove = scene.children.filter(obj => 
-                    obj !== camera && 
                     obj.name !== 'directionalLight' && 
                     obj.name !== 'ambientLight' &&
                     obj.name !== 'carSpotLight' &&
@@ -644,18 +737,21 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true; // Enable shadows
+            renderer.shadowMap.enabled = true; 
             renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
             if (container.children.length > 0) {
                 container.removeChild(container.children[0]);
             }
             container.appendChild(renderer.domElement);
             
-            // 5. Materials (Updated to use MeshStandardMaterial for PBR)
-            roadMaterial = new THREE.MeshStandardMaterial({ color: 0x1e272e, roughness: 0.9, metalness: 0.1 }); 
+            // 5. Materials (Enhanced PBR for Realism)
+            roadMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1a1a, 
+                roughness: 0.95, 
+                metalness: 0.05 
+            }); 
             laneMarkingMaterial = new THREE.MeshBasicMaterial({ color: LANE_MARKING_COLOR }); 
             barrierMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.5, metalness: 0.3 }); 
-            buildingMaterial = new THREE.MeshStandardMaterial({ color: 0x1c2833, roughness: 0.7, metalness: 0.1 }); 
             treeTrunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8 });
             treeLeavesMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22, roughness: 0.5 });
             streetLightPoleMaterial = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.6, metalness: 0.7 });
@@ -665,7 +761,7 @@
 
 
             // 6. Lights 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); 
             ambientLight.name = 'ambientLight';
             scene.add(ambientLight);
 
@@ -684,30 +780,35 @@
             scene.add(directionalLight);
             
             // A spot light pointing at the car for better car illumination
-            const carSpotLight = new THREE.SpotLight(0xffffff, 5, 100, Math.PI / 8, 0.5);
+            carSpotLight = new THREE.SpotLight(0xffffff, 5, 100, Math.PI / 8, 0.5);
             carSpotLight.position.set(0, 10, 0);
-            carSpotLight.target.position.set(0, 0, -5);
+            carSpotLightTarget = new THREE.Object3D(); 
+            carSpotLightTarget.position.set(0, 0, -5);
+            carSpotLight.target = carSpotLightTarget;
             carSpotLight.name = 'carSpotLight';
-            carSpotLight.target.name = 'carSpotLightTarget';
+            carSpotLightTarget.name = 'carSpotLightTarget';
             scene.add(carSpotLight);
-            scene.add(carSpotLight.target);
+            scene.add(carSpotLightTarget);
 
 
             // 7. Player Car (Cloning the created model)
             car = playerCarTemplate.clone();
             car.position.set(0, 0, 0); 
+            
+            // Add Player Name Tag
+            const playerNameTag = createTextSprite("Susmita", "white");
+            playerNameTag.position.set(0, CAR_HEIGHT + 0.5, 0);
+            car.add(playerNameTag);
+            
             scene.add(car);
 
-            // 8. Track Generation
-            generateInitialTrack();
-            createLaneMarkings();
-
-            // 9. Event Listeners (Unchanged)
+            // 8. Event Listeners 
             if (!window.listenersAttached) {
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('keydown', onKeyDown);
                 document.addEventListener('keyup', onKeyUp);
                 document.getElementById('restart-button').addEventListener('click', restartGame);
+                document.getElementById('start-button').addEventListener('click', startGame); 
                 
                 const leftButton = document.getElementById('left-button');
                 const rightButton = document.getElementById('right-button');
@@ -748,8 +849,7 @@
                 window.listenersAttached = true;
             }
             
-            clock.start();
-            animate(); 
+            renderer.render(scene, camera);
         }
 
         /**
@@ -786,38 +886,29 @@
          */
         function spawnObstacle(zPosition) {
             const obstacle = obstacleCarTemplate.clone(); 
-            const spawnRange = MAX_STEER_X - OBSTACLE_SWERVE_RANGE - (CAR_WIDTH / 2);
+            
+            const spawnRange = MAX_STEER_X - (CAR_WIDTH / 2);
             const initialX = (Math.random() - 0.5) * spawnRange * 2;
             
             obstacle.position.set(initialX, 0, zPosition);
             obstacle.rotation.y = Math.PI + (Math.random() - 0.5) * 0.2; 
             
-            obstacle.userData.swervePhase = Math.random() * Math.PI * 2; 
             obstacle.userData.initialX = initialX; 
             
+            // Add Obstacle Name Tag
+            const obstacleNameTag = createTextSprite("Biswajit", "red");
+            obstacleNameTag.position.set(0, CAR_HEIGHT + 0.5, 0);
+            obstacle.add(obstacleNameTag);
+
             scene.add(obstacle);
             obstacles.push(obstacle);
         }
         
         /**
-         * Updates the horizontal position of obstacles to make them swerve.
+         * Updates the horizontal position of obstacles. (Empty, as requested)
          */
         function updateObstacleMovement() {
-            const time = clock.getElapsedTime(); 
-
-            for (let i = 0; i < obstacles.length; i++) {
-                const obstacle = obstacles[i];
-                const { swervePhase, initialX } = obstacle.userData;
-
-                const swerveAmount = Math.sin(time * OBSTACLE_SWERVE_SPEED + swervePhase) * OBSTACLE_SWERVE_RANGE;
-
-                let newX = initialX + swerveAmount;
-                const maxBoundary = MAX_STEER_X - (CAR_WIDTH / 2); 
-                
-                newX = Math.max(-maxBoundary, Math.min(newX, maxBoundary));
-
-                obstacle.position.x = newX;
-            }
+            // Obstacles remain at their initial X position.
         }
 
         /**
@@ -844,12 +935,13 @@
          * Updates the position of the road, buildings, and obstacles to simulate forward movement.
          */
         function updateWorldMovement(delta) {
-            const moveDistance = trackSpeed * delta * 60; 
+            // World scroll distance is based on player speed (trackSpeed).
+            const worldScrollDistance = trackSpeed * delta * 60; 
 
             // 1. Move Road Segments and check for recycling
             for (let i = 0; i < roadSegments.length; i++) {
                 const segment = roadSegments[i];
-                segment.position.z += moveDistance;
+                segment.position.z += worldScrollDistance;
 
                 if (segment.position.z > Z_DELETE_LIMIT) {
                     segment.position.z -= RECYCLE_DISTANCE; 
@@ -862,7 +954,7 @@
             // 2. Move Roadside Objects 
             for (let i = roadsideObjects.length - 1; i >= 0; i--) {
                 const roadsideGroup = roadsideObjects[i];
-                roadsideGroup.position.z += moveDistance;
+                roadsideGroup.position.z += worldScrollDistance;
 
                 if (roadsideGroup.position.z > Z_DELETE_LIMIT) {
                     roadsideGroup.position.z -= RECYCLE_DISTANCE;
@@ -878,8 +970,6 @@
                     }
                     
                     // Recreate all elements within this recycled segment
-                    const recycledZ = roadsideGroup.position.z;
-                    
                     const roadEdge = ROAD_WIDTH / 2;
 
                     // 1. Roadside Shoulder/Sidewalk
@@ -899,11 +989,13 @@
                     const leftShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
                     leftShoulder.rotation.x = -Math.PI / 2;
                     leftShoulder.position.set(-(roadEdge + SHOULDER_WIDTH / 2), 0.005, 0); 
+                    leftShoulder.receiveShadow = true;
                     roadsideGroup.add(leftShoulder);
 
                     const rightShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
                     rightShoulder.rotation.x = -Math.PI / 2;
                     rightShoulder.position.set((roadEdge + SHOULDER_WIDTH / 2), 0.005, 0);
+                    rightShoulder.receiveShadow = true;
                     roadsideGroup.add(rightShoulder);
                     
                     // 2. Roadside Barriers
@@ -913,10 +1005,12 @@
                     
                     const leftBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
                     leftBarrier.position.set(-(roadEdge + SHOULDER_WIDTH + BARRIER_WIDTH / 2), barrierHeight / 2, 0);
+                    leftBarrier.castShadow = true;
                     roadsideGroup.add(leftBarrier);
 
                     const rightBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
                     rightBarrier.position.set((roadEdge + SHOULDER_WIDTH + BARRIER_WIDTH / 2), barrierHeight / 2, 0);
+                    rightBarrier.castShadow = true;
                     roadsideGroup.add(rightBarrier);
 
                     // 3. Roadside Props (Trees, Street Lights, Signs)
@@ -968,7 +1062,7 @@
             // 3. Move Lane Markings
             for (let i = 0; i < laneMarkings.length; i++) {
                 const marking = laneMarkings[i];
-                marking.position.z += moveDistance;
+                marking.position.z += worldScrollDistance;
 
                 if (marking.position.z > Z_DELETE_LIMIT) {
                     marking.position.z -= RECYCLE_DISTANCE; 
@@ -978,7 +1072,7 @@
             // 4. Move Obstacles
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obstacle = obstacles[i];
-                obstacle.position.z += moveDistance;
+                obstacle.position.z += worldScrollDistance;
 
                 if (obstacle.position.z > Z_DELETE_LIMIT) {
                     scene.remove(obstacle);
@@ -1025,6 +1119,7 @@
          */
         function restartGame() {
             init(); 
+            startGame();
         }
 
         /**
@@ -1080,13 +1175,20 @@
             car.rotation.z += (targetTilt - car.rotation.z) * 0.1;
 
             camera.position.x = car.position.x;
+            
+            // Keep the spotlight centered above the car
+            if (carSpotLight && carSpotLightTarget) {
+                carSpotLight.position.x = car.position.x;
+                carSpotLightTarget.position.x = car.position.x;
+                carSpotLight.target.updateMatrixWorld(); 
+            }
         }
 
         /**
          * The main animation loop.
          */
         function animate() {
-            if (isGameOver) {
+            if (!isGameStarted || isGameOver) { 
                 renderer.render(scene, camera);
                 return; 
             }
@@ -1103,7 +1205,7 @@
             score += trackSpeed * delta; 
             document.getElementById('game-score').textContent = Math.floor(score * 10); 
 
-            // 3. Dynamic Obstacle Movement 
+            // 3. Dynamic Obstacle Movement (Horizontal movement is disabled)
             updateObstacleMovement();
 
             // 4. World Movement (Road, Buildings, etc.)
