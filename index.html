@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Urban Highway Racer (Detailed Environment)</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,7 +27,6 @@
             }
         }
     </script>
-    <!-- Load Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
@@ -74,16 +72,13 @@
 </head>
 <body>
 
-    <!-- Three.js Scene Container -->
     <div id="scene-container"></div>
 
-    <!-- UI Score and Controls Panel (Top-Right) -->
     <div id="ui-controls" class="ui-panel fixed top-4 right-4 p-3 rounded-xl shadow-2xl border border-secondary/20 text-white flex flex-col items-end gap-2">
         <div class="text-xl font-extrabold text-secondary tracking-wider whitespace-nowrap">
             DISTANCE: <span id="game-score">0</span>m
         </div>
         
-        <!-- Instructions (Updated for speed control) -->
         <div class="text-sm text-gray-300 p-1 border border-gray-600 rounded-lg hidden sm:block">
             <span class="font-bold text-secondary">Controls:</span> 
             Steer: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> | 
@@ -91,30 +86,24 @@
         </div>
     </div>
 
-    <!-- Touch Controls for Mobile Users (Bottom) -->
-    <!-- REMOVED sm:hidden to ensure visibility on all screen sizes, including landscape mobile -->
-    <div id="touch-controls" class="fixed bottom-0 left-0 right-0 p-4 flex flex-col items-center z-20">
-        <!-- Speed Controls (Top Row of Mobile Controls) -->
-        <div class="flex justify-center gap-4 mb-4 w-full max-w-sm">
-            <button id="accelerate-button" class="control-button bg-green-600/80 text-white transition duration-150 p-3 rounded-xl shadow-xl w-32 h-12 text-sm font-black active:bg-green-700/80 border-green-500">
+    <div id="touch-controls" class="fixed bottom-0 left-0 right-0 p-4 flex justify-between items-end z-20">
+        <div class="flex flex-col gap-4 w-36 sm:w-40">
+            <button id="accelerate-button" class="control-button bg-green-600/80 text-white transition duration-150 p-3 rounded-xl shadow-xl h-12 text-sm font-black active:bg-green-700/80 border-green-500">
                 ACCELERATE (▲)
             </button>
-            <button id="brake-button" class="control-button bg-red-600/80 text-white transition duration-150 p-3 rounded-xl shadow-xl w-32 h-12 text-sm font-black active:bg-red-700/80 border-red-500">
+            <button id="brake-button" class="control-button bg-red-600/80 text-white transition duration-150 p-3 rounded-xl shadow-xl h-12 text-sm font-black active:bg-red-700/80 border-red-500">
                 BRAKE (▼)
             </button>
         </div>
-        <!-- Steering Controls (Bottom Row of Mobile Controls) -->
-        <div class="flex justify-between w-full max-w-sm">
-            <button id="left-button" class="control-button bg-primary/80 text-secondary transition duration-150 p-4 rounded-xl shadow-xl w-32 h-16 text-4xl font-black active:bg-secondary/20">
-                &#9664; <!-- Left Arrow -->
-            </button>
-            <button id="right-button" class="control-button bg-primary/80 text-secondary transition duration-150 p-4 rounded-xl shadow-xl w-32 h-16 text-4xl font-black active:bg-secondary/20">
-                &#9654; <!-- Right Arrow -->
-            </button>
+        
+        <div class="flex justify-end gap-2 sm:gap-4 w-36 sm:w-40">
+            <button id="left-button" class="control-button bg-primary/80 text-secondary transition duration-150 p-4 rounded-xl shadow-xl w-1/2 h-16 text-4xl font-black active:bg-secondary/20">
+                &#9664; </button>
+            <button id="right-button" class="control-button bg-primary/80 text-secondary transition duration-150 p-4 rounded-xl shadow-xl w-1/2 h-16 text-4xl font-black active:bg-secondary/20">
+                &#9654; </button>
         </div>
     </div>
 
-    <!-- Game Over Message Box -->
     <div id="game-over-overlay" class="game-over-overlay">
         <div class="bg-primary p-8 rounded-xl shadow-2xl border-4 border-red-500 text-white text-center w-80">
             <h2 class="text-4xl font-black text-red-500 mb-4">CRASHED!</h2>
