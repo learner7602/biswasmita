@@ -127,35 +127,69 @@
             width: 100%;
             display: none; /* Hidden by default, enabled via JS for touch devices */
             justify-content: space-between;
-            align-items: center;
+            /* Align D-pad and Fire button to the bottom for better touch feel */
+            align-items: flex-end; 
             padding: 0 40px;
             box-sizing: border-box;
             pointer-events: all;
             z-index: 10;
         }
 
-        #joystick-area {
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            position: relative;
+        /* New styles for Directional Pad (D-Pad) */
+        #directional-controls {
+            width: 160px; /* Overall size of the D-pad area */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: all;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .dpad-row {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .dpad-button {
+            width: 50px;
+            height: 50px;
+            margin: 2px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10+ */
+            -webkit-user-select: none;
+            -ms-user-select: none;
             user-select: none;
+            touch-action: manipulation; /* Prevents default mobile behavior like zooming */
+            transition: background 0.1s;
         }
 
-        #joystick-thumb {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            position: absolute;
+        .dpad-button svg {
+            width: 70%;
+            height: 70%;
+            fill: rgba(0, 255, 255, 0.9);
+            pointer-events: none;
         }
 
+        .dpad-button:active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: cyan;
+        }
+
+        .dpad-center {
+            width: 54px; /* Space to align the grid */
+            height: 54px;
+            margin: 2px;
+        }
+        /* End of D-Pad styles */
+        
         #fire-button {
             width: 80px;
             height: 80px;
@@ -242,11 +276,35 @@
                 <button id="restartButton">Play Again</button>
             </div>
         </div>
-        <!-- Mobile Touch Controls -->
+        <!-- Mobile Touch Controls (Updated to D-Pad) -->
         <div id="mobile-controls">
-            <div id="joystick-area">
-                <div id="joystick-thumb"></div>
+            <div id="directional-controls">
+                <div class="dpad-row">
+                    <!-- Up Button -->
+                    <div id="up-button" class="dpad-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
+                    </div>
+                </div>
+                <div class="dpad-row">
+                    <!-- Left Button -->
+                    <div id="left-button" class="dpad-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 7l-5 5 5 5z"/></svg>
+                    </div>
+                    <!-- Empty space for D-pad center -->
+                    <div class="dpad-center"></div>
+                    <!-- Right Button -->
+                    <div id="right-button" class="dpad-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 17l5-5-5-5z"/></svg>
+                    </div>
+                </div>
+                <div class="dpad-row">
+                    <!-- Down Button -->
+                    <div id="down-button" class="dpad-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                </div>
             </div>
+            <!-- Fire Button -->
             <div id="fire-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v4h-2zm0 6h2v2h-2z"/></svg>
             </div>
@@ -267,10 +325,12 @@
 
             // --- MOBILE CONTROLS UI ELEMENTS ---
             const mobileControls = document.getElementById('mobile-controls');
-            const joystickArea = document.getElementById('joystick-area');
-            const joystickThumb = document.getElementById('joystick-thumb');
+            // New directional button elements
+            const upButton = document.getElementById('up-button');
+            const downButton = document.getElementById('down-button');
+            const leftButton = document.getElementById('left-button');
+            const rightButton = document.getElementById('right-button');
             const fireButton = document.getElementById('fire-button');
-
 
             // --- CANVAS SETUP ---
             const canvas = document.getElementById('gameCanvas');
@@ -329,6 +389,7 @@
                 }
 
                 update(deltaTime) {
+                    // Adjusted player movement to match the arrow keys (D-pad/keyboard)
                     if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
                     if (keys['ArrowRight'] && this.x < canvas.width - this.width/2) this.x += this.speed;
                     if (keys['ArrowUp'] && this.y > 0) this.y -= this.speed;
@@ -641,12 +702,35 @@
                 keys[e.code] = false;
             });
             
-            // --- TOUCH CONTROLS LOGIC ---
+            // --- TOUCH CONTROLS LOGIC (UPDATED FOR D-PAD) ---
             function setupTouchControls() {
-                let joystickActive = false;
-                let joystickStartX, joystickStartY;
-                const joystickRadius = joystickArea.offsetWidth / 2;
+                
+                // Helper function to handle button press/release
+                const setupDirectionalButton = (button, keyName) => {
+                    // Press (touchstart)
+                    button.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        keys[keyName] = true;
+                    });
+                    
+                    // Release (touchend or touchcancel)
+                    const releaseHandler = (e) => {
+                        e.preventDefault();
+                        keys[keyName] = false;
+                    };
+                    
+                    // Bind the release handler to touchend and touchcancel
+                    button.addEventListener('touchend', releaseHandler);
+                    button.addEventListener('touchcancel', releaseHandler);
+                };
 
+                // Attach logic to all four directional buttons
+                setupDirectionalButton(upButton, 'ArrowUp');
+                setupDirectionalButton(downButton, 'ArrowDown');
+                setupDirectionalButton(leftButton, 'ArrowLeft');
+                setupDirectionalButton(rightButton, 'ArrowRight');
+
+                // Fire button logic (remains simple touch/release)
                 fireButton.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     keys['Space'] = true;
@@ -655,59 +739,6 @@
                     e.preventDefault();
                     keys['Space'] = false;
                 });
-                
-                joystickArea.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    joystickActive = true;
-                    const rect = joystickArea.getBoundingClientRect();
-                    joystickStartX = rect.left + joystickRadius;
-                    joystickStartY = rect.top + joystickRadius;
-                });
-
-                joystickArea.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    if (!joystickActive) return;
-                    
-                    const touch = e.touches[0];
-                    const deltaX = touch.clientX - joystickStartX;
-                    const deltaY = touch.clientY - joystickStartY;
-                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                    
-                    let moveX = deltaX / joystickRadius;
-                    let moveY = deltaY / joystickRadius;
-
-                    if (distance > joystickRadius) {
-                        moveX = deltaX / distance;
-                        moveY = deltaY / distance;
-                    }
-
-                    joystickThumb.style.transform = `translate(${moveX * (joystickRadius - 30)}px, ${moveY * (joystickRadius - 30)}px)`;
-
-                    // Reset keys
-                    keys['ArrowLeft'] = false;
-                    keys['ArrowRight'] = false;
-                    keys['ArrowUp'] = false;
-                    keys['ArrowDown'] = false;
-
-                    // Set keys based on joystick direction (with a deadzone)
-                    if (moveX < -0.2) keys['ArrowLeft'] = true;
-                    if (moveX > 0.2) keys['ArrowRight'] = true;
-                    if (moveY < -0.2) keys['ArrowUp'] = true;
-                    if (moveY > 0.2) keys['ArrowDown'] = true;
-                });
-
-                const resetJoystick = (e) => {
-                    e.preventDefault();
-                    joystickActive = false;
-                    joystickThumb.style.transform = `translate(0px, 0px)`;
-                    keys['ArrowLeft'] = false;
-                    keys['ArrowRight'] = false;
-                    keys['ArrowUp'] = false;
-                    keys['ArrowDown'] = false;
-                };
-
-                joystickArea.addEventListener('touchend', resetJoystick);
-                joystickArea.addEventListener('touchcancel', resetJoystick);
             }
 
             // --- INITIALIZATION FOR MENU BACKGROUND ---
@@ -742,6 +773,3 @@
     </script>
 </body>
 </html>
-
-
-
